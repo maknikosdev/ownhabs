@@ -1,0 +1,28 @@
+# Gradle
+.gradle/
+build/
+app/build/
+app/schemas/
+
+# Local configuration (περιέχει τοπικά paths του Android SDK — ποτέ στο git)
+local.properties
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+.DS_Store
+
+# Keystore / signing — ΠΟΤΕ μην ανεβάζεις κλειδί υπογραφής δημόσια (με ή χωρίς επέκταση)
+*.jks
+*.keystore
+*release-key*
+*upload-key*
+keystore.properties
+
+# Captures & profiling
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Log files
+*.log

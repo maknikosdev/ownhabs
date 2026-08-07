@@ -1,0 +1,7 @@
+<resources>
+    <color name="habitpulse_dark">#121B2E</color>
+    <color name="habitpulse_teal">#2FB6C0</color>
+    <color name="habitpulse_green">#9ED037</color>
+    <color name="habitpulse_white">#FFFFFF</color>
+    <color name="ic_launcher_background">#121B2E</color>
+</resources>
