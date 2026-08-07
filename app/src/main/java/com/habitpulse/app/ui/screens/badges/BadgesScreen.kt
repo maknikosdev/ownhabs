@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.habitpulse.app.data.repository.HabitRepository
 import com.habitpulse.app.ui.navigation.SimpleViewModelFactory
+import com.habitpulse.app.ui.strings.LocalStrings
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -25,6 +26,7 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BadgesScreen(repository: HabitRepository, onBack: () -> Unit) {
+    val strings = LocalStrings.current
     val viewModel: BadgesViewModel = viewModel(factory = SimpleViewModelFactory { BadgesViewModel(repository) })
     val items by viewModel.items.collectAsState()
     val dateFormat = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
@@ -32,9 +34,9 @@ fun BadgesScreen(repository: HabitRepository, onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Σήματα (Badges)") },
+                title = { Text(strings.badgesTitle) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Πίσω") }
+                    IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = strings.back) }
                 }
             )
         }
@@ -73,7 +75,7 @@ fun BadgesScreen(repository: HabitRepository, onBack: () -> Unit) {
                                     )
                                 }
                             } else {
-                                Text("Κλειδωμένο", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                                Text(strings.badgesLocked, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
                             }
                         }
                     }

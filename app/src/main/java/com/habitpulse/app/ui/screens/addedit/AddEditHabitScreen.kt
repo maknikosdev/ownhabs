@@ -19,8 +19,10 @@ import com.habitpulse.app.data.local.entity.GoalType
 import com.habitpulse.app.data.repository.CustomCategoryRepository
 import com.habitpulse.app.data.repository.HabitRepository
 import com.habitpulse.app.ui.navigation.SimpleViewModelFactory
+import com.habitpulse.app.ui.strings.LocalStrings
+import com.habitpulse.app.ui.strings.LocalLang
 
-private val ICONS = listOf("✅", "💧", "📖", "🏃", "🧘", "🥗", "😴", "💊", "✍️", "🎯", "🚭", "💰")
+private val ICONS = listOf("✅", "💧", "📖", "🏃", "🧘", "🥗", "😴", "💊", "✍️", "🎯", "🚭", "💰", "🐾", "🧹", "📞", "🌱")
 private val COLORS = listOf("#2FB6C0", "#9ED037", "#F2B705", "#E85D5D", "#8E7CC3", "#3B82F6")
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -33,8 +35,10 @@ fun AddEditHabitScreen(
     customTemplateId: String? = null,
     onDone: () -> Unit
 ) {
+    val strings = LocalStrings.current
+    val lang = LocalLang.current
     val viewModel: AddEditHabitViewModel = viewModel(
-        factory = SimpleViewModelFactory { AddEditHabitViewModel(repository, categoryRepository, habitId, templateId, customTemplateId) }
+        factory = SimpleViewModelFactory { AddEditHabitViewModel(repository, categoryRepository, habitId, templateId, customTemplateId, lang) }
     )
     val state by viewModel.state.collectAsState()
     var showDeleteConfirm by remember { mutableStateOf(false) }
@@ -42,26 +46,26 @@ fun AddEditHabitScreen(
     if (showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
-            title = { Text("Μόνιμη διαγραφή;") },
-            text = { Text("Θα διαγραφούν η συνήθεια και όλο το ιστορικό καταγραφών της. Η ενέργεια δεν αναιρείται.") },
+            title = { Text(strings.addEditDeleteConfirmTitle) },
+            text = { Text(strings.addEditDeleteConfirmText) },
             confirmButton = {
-                TextButton(onClick = { viewModel.deletePermanently(onDone) }) { Text("Διαγραφή") }
+                TextButton(onClick = { viewModel.deletePermanently(onDone) }) { Text(strings.addEditDeleteButton) }
             },
-            dismissButton = { TextButton(onClick = { showDeleteConfirm = false }) { Text("Ακύρωση") } }
+            dismissButton = { TextButton(onClick = { showDeleteConfirm = false }) { Text(strings.cancel) } }
         )
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (habitId == null) "Νέα Συνήθεια" else "Επεξεργασία Συνήθειας") },
+                title = { Text(if (habitId == null) strings.addEditNewTitle else strings.addEditEditTitle) },
                 navigationIcon = {
-                    IconButton(onClick = onDone) { Icon(Icons.Default.ArrowBack, contentDescription = "Πίσω") }
+                    IconButton(onClick = onDone) { Icon(Icons.Default.ArrowBack, contentDescription = strings.back) }
                 },
                 actions = {
                     if (habitId != null) {
                         IconButton(onClick = { showDeleteConfirm = true }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Διαγραφή")
+                            Icon(Icons.Default.Delete, contentDescription = strings.delete)
                         }
                     }
                 }
@@ -86,18 +90,18 @@ fun AddEditHabitScreen(
             OutlinedTextField(
                 value = state.title,
                 onValueChange = { v -> viewModel.update { it.copy(title = v) } },
-                label = { Text("Τίτλος (π.χ. Πρωινό διάβασμα)") },
+                label = { Text(strings.addEditFieldTitle) },
                 modifier = Modifier.fillMaxWidth()
             )
 
             OutlinedTextField(
                 value = state.description,
                 onValueChange = { v -> viewModel.update { it.copy(description = v) } },
-                label = { Text("Περιγραφή (προαιρετικό)") },
+                label = { Text(strings.addEditFieldDescription) },
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Text("Εικονίδιο", style = MaterialTheme.typography.titleMedium)
+            Text(strings.addEditIcon, style = MaterialTheme.typography.titleMedium)
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(ICONS) { icon ->
                     FilterChip(
@@ -108,7 +112,7 @@ fun AddEditHabitScreen(
                 }
             }
 
-            Text("Χρώμα", style = MaterialTheme.typography.titleMedium)
+            Text(strings.addEditColor, style = MaterialTheme.typography.titleMedium)
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(COLORS) { hex ->
                     val selected = state.colorHex == hex
@@ -126,7 +130,7 @@ fun AddEditHabitScreen(
                 }
             }
 
-            Text("Τύπος Στόχου", style = MaterialTheme.typography.titleMedium)
+            Text(strings.addEditGoalType, style = MaterialTheme.typography.titleMedium)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -136,7 +140,7 @@ fun AddEditHabitScreen(
                     )
                 ) {
                     RadioButton(selected = state.goalType == GoalType.BOOLEAN, onClick = null)
-                    Text("Ναι / Όχι")
+                    Text(strings.addEditGoalBoolean)
                 }
                 Spacer(Modifier.width(16.dp))
                 Row(
@@ -147,7 +151,7 @@ fun AddEditHabitScreen(
                     )
                 ) {
                     RadioButton(selected = state.goalType == GoalType.NUMERIC, onClick = null)
-                    Text("Ποσοτικός Στόχος")
+                    Text(strings.addEditGoalNumeric)
                 }
             }
 
@@ -156,19 +160,19 @@ fun AddEditHabitScreen(
                     OutlinedTextField(
                         value = state.targetValue,
                         onValueChange = { v -> viewModel.update { it.copy(targetValue = v) } },
-                        label = { Text("Τιμή Στόχου") },
+                        label = { Text(strings.addEditTargetValue) },
                         modifier = Modifier.weight(1f)
                     )
                     OutlinedTextField(
                         value = state.unit,
                         onValueChange = { v -> viewModel.update { it.copy(unit = v) } },
-                        label = { Text("Μονάδα (π.χ. ml)") },
+                        label = { Text(strings.addEditUnit) },
                         modifier = Modifier.weight(1f)
                     )
                 }
             }
 
-            Text("Συχνότητα", style = MaterialTheme.typography.titleMedium)
+            Text(strings.addEditFrequency, style = MaterialTheme.typography.titleMedium)
             val maxTimes = viewModel.maxTimesFor(state.frequencyPeriod)
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(
@@ -176,9 +180,9 @@ fun AddEditHabitScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     listOf(
-                        com.habitpulse.app.data.local.entity.FrequencyPeriod.DAILY to "Ημέρα",
-                        com.habitpulse.app.data.local.entity.FrequencyPeriod.WEEKLY to "Εβδομάδα",
-                        com.habitpulse.app.data.local.entity.FrequencyPeriod.MONTHLY to "Μήνας"
+                        com.habitpulse.app.data.local.entity.FrequencyPeriod.DAILY to strings.addEditFrequencyDay,
+                        com.habitpulse.app.data.local.entity.FrequencyPeriod.WEEKLY to strings.addEditFrequencyWeek,
+                        com.habitpulse.app.data.local.entity.FrequencyPeriod.MONTHLY to strings.addEditFrequencyMonth
                     ).forEach { (period, label) ->
                         FilterChip(
                             modifier = Modifier.weight(1f),
@@ -197,7 +201,7 @@ fun AddEditHabitScreen(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    Text("Πόσες φορές:", style = MaterialTheme.typography.bodyMedium)
+                    Text(strings.addEditHowManyTimes, style = MaterialTheme.typography.bodyMedium)
                     IconButton(onClick = {
                         viewModel.update { it.copy(timesPerPeriod = (it.timesPerPeriod - 1).coerceIn(1, maxTimes)) }
                     }) { Text("−", style = MaterialTheme.typography.titleLarge) }
@@ -222,10 +226,12 @@ fun AddEditHabitScreen(
                 )
             }
 
-            Text("Ώρα Υπενθύμισης", style = MaterialTheme.typography.titleMedium)
+            Text(strings.addEditReminderTime, style = MaterialTheme.typography.titleMedium)
             ReminderTimePicker(
                 hour = state.reminderHour,
                 minute = state.reminderMinute,
+                setTimeLabel = strings.addEditSetTime,
+                removeLabel = strings.addEditRemoveTime,
                 onChange = { h, m -> viewModel.update { it.copy(reminderHour = h, reminderMinute = m) } }
             )
 
@@ -235,14 +241,14 @@ fun AddEditHabitScreen(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = state.title.isNotBlank()
             ) {
-                Text(if (habitId == null) "Δημιουργία Συνήθειας" else "Αποθήκευση Αλλαγών")
+                Text(if (habitId == null) strings.addEditCreateButton else strings.addEditSaveButton)
             }
 
             if (habitId != null) {
                 OutlinedButton(
                     onClick = { viewModel.archive(onDone) },
                     modifier = Modifier.fillMaxWidth()
-                ) { Text("Αρχειοθέτηση") }
+                ) { Text(strings.addEditArchiveButton) }
             }
 
             Spacer(Modifier.height(24.dp))
@@ -251,7 +257,13 @@ fun AddEditHabitScreen(
 }
 
 @Composable
-private fun ReminderTimePicker(hour: Int?, minute: Int?, onChange: (Int?, Int?) -> Unit) {
+private fun ReminderTimePicker(
+    hour: Int?,
+    minute: Int?,
+    setTimeLabel: String,
+    removeLabel: String,
+    onChange: (Int?, Int?) -> Unit
+) {
     val context = androidx.compose.ui.platform.LocalContext.current
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         AssistChip(
@@ -268,12 +280,12 @@ private fun ReminderTimePicker(hour: Int?, minute: Int?, onChange: (Int?, Int?) 
             label = {
                 Text(
                     if (hour != null && minute != null) String.format("%02d:%02d", hour, minute)
-                    else "Ορισμός ώρας"
+                    else setTimeLabel
                 )
             }
         )
         if (hour != null) {
-            TextButton(onClick = { onChange(null, null) }) { Text("Κατάργηση") }
+            TextButton(onClick = { onChange(null, null) }) { Text(removeLabel) }
         }
     }
 }

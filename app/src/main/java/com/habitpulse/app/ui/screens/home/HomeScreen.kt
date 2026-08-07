@@ -33,6 +33,9 @@ import com.habitpulse.app.data.local.entity.FrequencyPeriod
 import com.habitpulse.app.data.repository.HabitRepository
 import com.habitpulse.app.domain.FrequencyCalculator
 import com.habitpulse.app.ui.navigation.SimpleViewModelFactory
+import com.habitpulse.app.ui.strings.AppStrings
+import com.habitpulse.app.ui.strings.LocalStrings
+import com.habitpulse.app.ui.components.QuickLogDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,25 +47,40 @@ fun HomeScreen(
     onOpenBadges: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
-    val viewModel: HomeViewModel = viewModel(factory = SimpleViewModelFactory { HomeViewModel(repository) })
-    val habits by viewModel.uiState.collectAsState()
+    val strings = LocalStrings.current
     val context = LocalContext.current
+    val viewModel: HomeViewModel = viewModel(factory = SimpleViewModelFactory { HomeViewModel(repository, context.applicationContext) })
+    val habits by viewModel.uiState.collectAsState()
 
     var celebrationBadges by remember { mutableStateOf<List<String>>(emptyList()) }
     var habitToDelete by remember { mutableStateOf<HabitEntity?>(null) }
+    var habitToQuickLog by remember { mutableStateOf<HomeHabitUiState?>(null) }
+
+    if (habitToQuickLog != null) {
+        QuickLogDialog(
+            habit = habitToQuickLog!!.habit,
+            currentValue = habitToQuickLog!!.todayValue,
+            strings = strings,
+            onDismiss = { habitToQuickLog = null },
+            onConfirm = { value ->
+                viewModel.setTodayValue(habitToQuickLog!!.habit, value) { badges -> celebrationBadges = badges }
+                habitToQuickLog = null
+            }
+        )
+    }
 
     if (habitToDelete != null) {
         AlertDialog(
             onDismissRequest = { habitToDelete = null },
-            title = { Text("Μόνιμη διαγραφή;") },
-            text = { Text("Θα διαγραφούν η «${habitToDelete!!.title}» και όλο το ιστορικό καταγραφών της. Η ενέργεια δεν αναιρείται.") },
+            title = { Text(strings.homeDeleteConfirmTitle) },
+            text = { Text(strings.homeDeleteConfirmText(habitToDelete!!.title)) },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.deleteHabitPermanently(habitToDelete!!)
                     habitToDelete = null
-                }) { Text("Διαγραφή") }
+                }) { Text(strings.homeDeleteConfirmButton) }
             },
-            dismissButton = { TextButton(onClick = { habitToDelete = null }) { Text("Ακύρωση") } }
+            dismissButton = { TextButton(onClick = { habitToDelete = null }) { Text(strings.cancel) } }
         )
     }
 
@@ -70,9 +88,9 @@ fun HomeScreen(
         AlertDialog(
             onDismissRequest = { celebrationBadges = emptyList() },
             confirmButton = {
-                TextButton(onClick = { celebrationBadges = emptyList() }) { Text("Ωραία!") }
+                TextButton(onClick = { celebrationBadges = emptyList() }) { Text("🎉") }
             },
-            title = { Text("🎉 Νέο Badge!") },
+            title = { Text("🎉 Badge!") },
             text = { Text(celebrationBadges.joinToString(", ")) }
         )
     }
@@ -80,26 +98,26 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("HabitPulse", fontWeight = FontWeight.Bold) },
+                title = { Text(strings.appName, fontWeight = FontWeight.Bold) },
                 actions = {
                     IconButton(onClick = onOpenBadges) {
-                        Icon(Icons.Default.EmojiEvents, contentDescription = "Badges")
+                        Icon(Icons.Default.EmojiEvents, contentDescription = strings.navBadges)
                     }
                     IconButton(onClick = onOpenSettings) {
-                        Icon(Icons.Default.Settings, contentDescription = "Ρυθμίσεις")
+                        Icon(Icons.Default.Settings, contentDescription = strings.navSettings)
                     }
                 }
             )
         },
         floatingActionButton = {
             FloatingActionButton(onClick = onAddHabit) {
-                Icon(Icons.Default.Add, contentDescription = "Προσθήκη Συνήθειας")
+                Icon(Icons.Default.Add, contentDescription = strings.add)
             }
         }
     ) { padding ->
         if (habits.isEmpty()) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text("Δεν έχεις προσθέσει ακόμα καμία συνήθεια.\nΠάτησε + για να ξεκινήσεις.", textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                Text(strings.homeEmptyTitle, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
             }
         } else {
             LazyColumn(
@@ -110,13 +128,13 @@ fun HomeScreen(
                 items(habits, key = { it.habit.id }) { state ->
                     HabitCard(
                         state = state,
+                        strings = strings,
                         onTap = {
                             val vibrator = context.getSystemService(Vibrator::class.java)
                             vibrator?.let {
                                 if (it.hasVibrator()) it.vibrate(VibrationEffect.createOneShot(35, VibrationEffect.DEFAULT_AMPLITUDE))
                             }
-                            val delta = if (state.habit.goalType == GoalType.BOOLEAN) 1.0 else state.habit.targetValue / 8.0
-                            viewModel.logCompletion(state.habit, delta) { badges -> celebrationBadges = badges }
+                            habitToQuickLog = state
                         },
                         onOpenHistory = { onOpenHistory(state.habit.id) },
                         onEdit = { onEditHabit(state.habit.id) },
@@ -132,6 +150,7 @@ fun HomeScreen(
 @Composable
 private fun HabitCard(
     state: HomeHabitUiState,
+    strings: AppStrings,
     onTap: () -> Unit,
     onOpenHistory: () -> Unit,
     onEdit: () -> Unit,
@@ -162,16 +181,16 @@ private fun HabitCard(
                 Text(
                     text = when {
                         habit.frequencyPeriod != FrequencyPeriod.DAILY ->
-                            "${state.progress.completedUnits}/${state.progress.requiredUnits} φορές ${periodLabel(habit.frequencyPeriod)}" +
-                                if (habit.goalType == GoalType.NUMERIC) " · σήμερα ${state.todayValue.toInt()}/${habit.targetValue.toInt()} ${habit.unit}" else ""
+                            "${state.progress.completedUnits}/${state.progress.requiredUnits} ${periodLabel(habit.frequencyPeriod, strings)}" +
+                                if (habit.goalType == GoalType.NUMERIC) " · ${strings.homeTimesToday} ${state.todayValue.toInt()}/${habit.targetValue.toInt()} ${habit.unit}" else ""
                         habit.goalType == GoalType.BOOLEAN ->
-                            if (state.progress.metToday) "Ολοκληρώθηκε ✓" else "Εκκρεμεί"
+                            if (state.progress.metToday) strings.homeCompleted else strings.homePending
                         else -> "${state.todayValue.toInt()} / ${habit.targetValue.toInt()} ${habit.unit}"
                     },
                     style = MaterialTheme.typography.bodyMedium
                 )
                 if (state.currentStreak > 0) {
-                    Text("🔥 ${state.currentStreak} ημέρες σερί", style = MaterialTheme.typography.labelSmall)
+                    Text("🔥 ${state.currentStreak} ${strings.homeStreakDays}", style = MaterialTheme.typography.labelSmall)
                 }
                 if (habit.frequencyPeriod != FrequencyPeriod.DAILY) {
                     Box(Modifier.padding(top = 6.dp)) {
@@ -200,26 +219,26 @@ private fun HabitCard(
             ) {
                 Icon(
                     if (state.progress.metToday) Icons.Default.EmojiEvents else Icons.Default.Add,
-                    contentDescription = "Καταγραφή"
+                    contentDescription = strings.add
                 )
             }
             Box {
                 IconButton(onClick = { menuExpanded = true }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "Περισσότερα")
+                    Icon(Icons.Default.MoreVert, contentDescription = null)
                 }
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                     DropdownMenuItem(
-                        text = { Text("Επεξεργασία") },
+                        text = { Text(strings.homeMenuEdit) },
                         leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
                         onClick = { menuExpanded = false; onEdit() }
                     )
                     DropdownMenuItem(
-                        text = { Text("Αρχειοθέτηση") },
+                        text = { Text(strings.homeMenuArchive) },
                         leadingIcon = { Icon(Icons.Default.Archive, contentDescription = null) },
                         onClick = { menuExpanded = false; onArchive() }
                     )
                     DropdownMenuItem(
-                        text = { Text("Μόνιμη Διαγραφή") },
+                        text = { Text(strings.homeMenuDelete) },
                         leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
                         onClick = { menuExpanded = false; onDelete() }
                     )
@@ -229,8 +248,8 @@ private fun HabitCard(
     }
 }
 
-private fun periodLabel(period: FrequencyPeriod): String = when (period) {
-    FrequencyPeriod.WEEKLY -> "αυτή την εβδομάδα"
-    FrequencyPeriod.MONTHLY -> "αυτόν τον μήνα"
-    FrequencyPeriod.DAILY -> "σήμερα"
+private fun periodLabel(period: FrequencyPeriod, strings: AppStrings): String = when (period) {
+    FrequencyPeriod.WEEKLY -> strings.homeTimesThisWeek
+    FrequencyPeriod.MONTHLY -> strings.homeTimesThisMonth
+    FrequencyPeriod.DAILY -> strings.homeTimesToday
 }

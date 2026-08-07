@@ -19,8 +19,11 @@ data class HistoryUiState(
     val habit: HabitEntity? = null,
     val logs: List<HabitLogEntity> = emptyList(),
     val dailyIntensity: Map<LocalDate, Float> = emptyMap(),
+    val frozenDates: Set<LocalDate> = emptySet(),
     val streak: StreakResult = StreakResult(0, 0),
-    val totalCompletions: Int = 0
+    val totalCompletions: Int = 0,
+    val freezesUsedThisMonth: Int = 0,
+    val freezesAvailableThisMonth: Int = com.habitpulse.app.data.local.entity.StreakFreezeEntity.FREEZES_PER_MONTH
 )
 
 class HistoryViewModel(
@@ -32,6 +35,9 @@ class HistoryViewModel(
     val state: StateFlow<HistoryUiState> = _state.asStateFlow()
     private val zone = ZoneId.systemDefault()
 
+    private val _freezeMessage = MutableStateFlow<FreezeMsgType?>(null)
+    val freezeMessage: StateFlow<FreezeMsgType?> = _freezeMessage.asStateFlow()
+
     init { refresh() }
 
     fun refresh() {
@@ -39,6 +45,7 @@ class HistoryViewModel(
             val habit = repository.getHabit(habitId) ?: return@launch
             val logs = repository.getAllLogs(habitId)
             val streak = repository.getStreak(habitId)
+            val freezesUsed = repository.freezesUsedThisMonth(habitId)
 
             val grouped = logs.groupBy {
                 Instant.ofEpochMilli(it.timestamp).atZone(zone).toLocalDate()
@@ -51,12 +58,17 @@ class HistoryViewModel(
                 }
             }
 
+            var frozenDates = repository.getFrozenDatesOnce(habitId)
+
             _state.value = HistoryUiState(
                 habit = habit,
                 logs = logs.sortedByDescending { it.timestamp },
                 dailyIntensity = intensity,
+                frozenDates = frozenDates,
                 streak = streak,
-                totalCompletions = logs.size
+                totalCompletions = logs.size,
+                freezesUsedThisMonth = freezesUsed,
+                freezesAvailableThisMonth = com.habitpulse.app.data.local.entity.StreakFreezeEntity.FREEZES_PER_MONTH
             )
         }
     }
@@ -81,4 +93,21 @@ class HistoryViewModel(
             refresh()
         }
     }
+
+    /** Εφαρμόζει ένα streak freeze ("κάρτα χάρης") σε μια χαμένη ημέρα, αν διαθέσιμο. */
+    fun applyStreakFreeze(date: LocalDate) {
+        viewModelScope.launch {
+            _freezeMessage.value = when (repository.applyStreakFreeze(habitId, date)) {
+                is HabitRepository.FreezeResult.Applied -> FreezeMsgType.APPLIED
+                is HabitRepository.FreezeResult.AlreadyLogged -> FreezeMsgType.ALREADY_LOGGED
+                is HabitRepository.FreezeResult.AlreadyFrozen -> FreezeMsgType.ALREADY_FROZEN
+                is HabitRepository.FreezeResult.MonthlyLimitReached -> FreezeMsgType.LIMIT_REACHED
+            }
+            refresh()
+        }
+    }
+
+    fun clearFreezeMessage() { _freezeMessage.value = null }
 }
+
+enum class FreezeMsgType { APPLIED, ALREADY_LOGGED, ALREADY_FROZEN, LIMIT_REACHED }

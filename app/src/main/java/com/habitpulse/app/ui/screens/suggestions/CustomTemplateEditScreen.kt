@@ -21,6 +21,7 @@ import com.habitpulse.app.data.local.entity.GoalType
 import com.habitpulse.app.data.repository.CustomCategoryRepository
 import com.habitpulse.app.domain.FrequencyCalculator
 import com.habitpulse.app.ui.navigation.SimpleViewModelFactory
+import com.habitpulse.app.ui.strings.LocalStrings
 
 private val ICONS = listOf("✅", "💧", "📖", "🏃", "🧘", "🥗", "😴", "💊", "✍️", "🎯", "🚭", "💰", "🐾", "🧹", "📞", "🌱")
 private val COLORS = listOf("#2FB6C0", "#9ED037", "#F2B705", "#E85D5D", "#8E7CC3", "#3B82F6")
@@ -33,6 +34,7 @@ fun CustomTemplateEditScreen(
     templateId: String?,
     onDone: () -> Unit
 ) {
+    val strings = LocalStrings.current
     val viewModel: CustomTemplateEditViewModel = viewModel(
         factory = SimpleViewModelFactory { CustomTemplateEditViewModel(repository, categoryId, templateId) }
     )
@@ -42,24 +44,24 @@ fun CustomTemplateEditScreen(
     if (showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
-            title = { Text("Διαγραφή πρότασης;") },
-            text = { Text("Θα αφαιρεθεί μόνιμα από την κατηγορία σου. Δεν επηρεάζει τις συνήθειες που έχεις ήδη δημιουργήσει από αυτήν.") },
-            confirmButton = { TextButton(onClick = { viewModel.delete(onDone) }) { Text("Διαγραφή") } },
-            dismissButton = { TextButton(onClick = { showDeleteConfirm = false }) { Text("Ακύρωση") } }
+            title = { Text(strings.templateDeleteConfirmTitle) },
+            text = { Text(strings.templateDeleteConfirmText) },
+            confirmButton = { TextButton(onClick = { viewModel.delete(onDone) }) { Text(strings.delete) } },
+            dismissButton = { TextButton(onClick = { showDeleteConfirm = false }) { Text(strings.cancel) } }
         )
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (templateId == null) "Νέα Πρόταση" else "Επεξεργασία Πρότασης") },
+                title = { Text(if (templateId == null) strings.templateNewTitle else strings.templateEditTitle) },
                 navigationIcon = {
-                    IconButton(onClick = onDone) { Icon(Icons.Default.ArrowBack, contentDescription = "Πίσω") }
+                    IconButton(onClick = onDone) { Icon(Icons.Default.ArrowBack, contentDescription = strings.back) }
                 },
                 actions = {
                     if (templateId != null) {
                         IconButton(onClick = { showDeleteConfirm = true }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Διαγραφή")
+                            Icon(Icons.Default.Delete, contentDescription = strings.delete)
                         }
                     }
                 }
@@ -76,24 +78,24 @@ fun CustomTemplateEditScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                "Αυτή είναι μια πρόταση, όχι μια ενεργή συνήθεια — θα εμφανίζεται στη λίστα προτάσεων όταν πατάς «+».",
+                strings.templateHintText,
                 style = MaterialTheme.typography.bodySmall
             )
 
             OutlinedTextField(
                 value = state.title,
                 onValueChange = { v -> viewModel.update { it.copy(title = v) } },
-                label = { Text("Τίτλος") },
+                label = { Text(strings.addEditFieldTitle) },
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
                 value = state.description,
                 onValueChange = { v -> viewModel.update { it.copy(description = v) } },
-                label = { Text("Περιγραφή (προαιρετικό)") },
+                label = { Text(strings.addEditFieldDescription) },
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Text("Εικονίδιο", style = MaterialTheme.typography.titleMedium)
+            Text(strings.addEditIcon, style = MaterialTheme.typography.titleMedium)
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(ICONS) { icon ->
                     FilterChip(
@@ -104,7 +106,7 @@ fun CustomTemplateEditScreen(
                 }
             }
 
-            Text("Χρώμα", style = MaterialTheme.typography.titleMedium)
+            Text(strings.addEditColor, style = MaterialTheme.typography.titleMedium)
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(COLORS) { hex ->
                     val selected = state.colorHex == hex
@@ -122,7 +124,7 @@ fun CustomTemplateEditScreen(
                 }
             }
 
-            Text("Τύπος Στόχου", style = MaterialTheme.typography.titleMedium)
+            Text(strings.addEditGoalType, style = MaterialTheme.typography.titleMedium)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -132,7 +134,7 @@ fun CustomTemplateEditScreen(
                     )
                 ) {
                     RadioButton(selected = state.goalType == GoalType.BOOLEAN, onClick = null)
-                    Text("Ναι / Όχι")
+                    Text(strings.addEditGoalBoolean)
                 }
                 Spacer(Modifier.width(16.dp))
                 Row(
@@ -143,7 +145,7 @@ fun CustomTemplateEditScreen(
                     )
                 ) {
                     RadioButton(selected = state.goalType == GoalType.NUMERIC, onClick = null)
-                    Text("Ποσοτικός Στόχος")
+                    Text(strings.addEditGoalNumeric)
                 }
             }
 
@@ -152,25 +154,25 @@ fun CustomTemplateEditScreen(
                     OutlinedTextField(
                         value = state.targetValue,
                         onValueChange = { v -> viewModel.update { it.copy(targetValue = v) } },
-                        label = { Text("Τιμή Στόχου") },
+                        label = { Text(strings.addEditTargetValue) },
                         modifier = Modifier.weight(1f)
                     )
                     OutlinedTextField(
                         value = state.unit,
                         onValueChange = { v -> viewModel.update { it.copy(unit = v) } },
-                        label = { Text("Μονάδα") },
+                        label = { Text(strings.addEditUnit) },
                         modifier = Modifier.weight(1f)
                     )
                 }
             }
 
-            Text("Προτεινόμενη Συχνότητα", style = MaterialTheme.typography.titleMedium)
+            Text(strings.addEditFrequency, style = MaterialTheme.typography.titleMedium)
             val maxTimes = viewModel.maxTimesFor(state.frequencyPeriod)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(
-                    FrequencyPeriod.DAILY to "Ημέρα",
-                    FrequencyPeriod.WEEKLY to "Εβδομάδα",
-                    FrequencyPeriod.MONTHLY to "Μήνας"
+                    FrequencyPeriod.DAILY to strings.addEditFrequencyDay,
+                    FrequencyPeriod.WEEKLY to strings.addEditFrequencyWeek,
+                    FrequencyPeriod.MONTHLY to strings.addEditFrequencyMonth
                 ).forEach { (period, label) ->
                     FilterChip(
                         modifier = Modifier.weight(1f),
@@ -185,7 +187,7 @@ fun CustomTemplateEditScreen(
                 }
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                Text("Πόσες φορές:", style = MaterialTheme.typography.bodyMedium)
+                Text(strings.addEditHowManyTimes, style = MaterialTheme.typography.bodyMedium)
                 IconButton(onClick = { viewModel.update { it.copy(timesPerPeriod = (it.timesPerPeriod - 1).coerceIn(1, maxTimes)) } }) {
                     Text("−", style = MaterialTheme.typography.titleLarge)
                 }
@@ -210,7 +212,7 @@ fun CustomTemplateEditScreen(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = state.title.isNotBlank()
             ) {
-                Text(if (templateId == null) "Προσθήκη στην Κατηγορία" else "Αποθήκευση Αλλαγών")
+                Text(if (templateId == null) strings.templateAddButton else strings.templateSaveButton)
             }
             Spacer(Modifier.height(24.dp))
         }

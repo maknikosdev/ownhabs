@@ -14,19 +14,23 @@ premium, και να στέλνουν τα δεδομένα μου ο θεός �
 ## Τι κάνει
 
 - ✅ Συνήθειες τύπου **Ναι/Όχι** ή με **ποσοτικό στόχο** (π.χ. «Νερό — 2000 ml»)
+- 🎯 Κατά την καταγραφή, επιλέγεις ρητά: **Έγινε πλήρως / Εν μέρει (με ακρίβεια μέσω slider) / Δεν έγινε** — όχι σιωπηλά, μαντεμένα taps
 - 🔁 Συχνότητα στα δικά σου μέτρα: καθημερινά, ή Χ φορές/εβδομάδα, ή Χ φορές/μήνα
   (π.χ. «καθαρισμός κατοικίδιου, 2 φορές την εβδομάδα»)
 - 📅 Ημερολόγιο/heatmap 52 εβδομάδων, σαν το contribution graph του GitHub
 - 🔥 Streaks — τρέχον και προσωπικό ρεκόρ
+- ❄️ **Streak Freeze**: μία «κάρτα χάρης» τον μήνα ανά συνήθεια, καλύπτει μια χαμένη μέρα χωρίς να σπάσει το σερί σου
 - 🏆 Μερικά απλά badges για κίνητρο (χωρίς gamification-εξάρτηση, μόνο ένα ελαφρύ nudge)
 - 📁 Δικές σου κατηγορίες προτάσεων, πέρα από τις έτοιμες που έρχονται με την εφαρμογή
+- 🏠 **Widget αρχικής οθόνης** — κατέγραψε τις 3 πρώτες συνήθειές σου χωρίς να ανοίξεις καν την εφαρμογή
+- 🇬🇷 🇬🇧 **Δίγλωσση** (Ελληνικά/English) — εναλλαγή μέσα από τις Ρυθμίσεις, καμία εξάρτηση από τη γλώσσα συστήματος. Οι έτοιμες προτάσεις μεταφράζονται αυτόματα· ό,τι γράφεις εσύ (τίτλοι συνηθειών, περιγραφές) μένει πάντα όπως το έγραψες, χωρίς καμία αυτόματη μετάφραση
 - 💾 Export/import σε `.json` — τα δεδομένα σου, όποτε θες, όπου θες
 - 📴 Καμία σύνδεση internet απαιτούμενη. Ποτέ.
 
 ## Στοίβα
 
-Kotlin, Jetpack Compose, Room (SQLite), αρχιτεκτονική MVVM. Χωρίς Firebase, χωρίς κανένα
-analytics SDK, χωρίς κανένα SDK τρίτου γενικά.
+Kotlin, Jetpack Compose, Room (SQLite), αρχιτεκτονική MVVM, κλασικό AppWidget (RemoteViews)
+για το widget. Χωρίς Firebase, χωρίς κανένα analytics SDK, χωρίς κανένα SDK τρίτου γενικά.
 
 ## Πώς να το τρέξεις
 
@@ -40,17 +44,19 @@ git clone <this repo>
 
 ```
 app/src/main/java/com/habitpulse/app/
-├── data/           Room entities/DAOs, repositories, backup JSON
-├── domain/         streaks, badge engine, υπολογισμός συχνότητας
-├── ui/              Compose οθόνες (home, add/edit, history, badges, settings)
+├── data/           Room entities/DAOs, repositories, backup JSON, ενσωματωμένες προτάσεις
+├── domain/         streaks, streak freeze, badge engine, υπολογισμός συχνότητας
+├── ui/              Compose οθόνες (home, add/edit, history, badges, settings, suggestions)
+│   └── strings/     σύστημα δίγλωσσων strings (EL/EN), χωρίς εξάρτηση από locale συστήματος
+├── widget/          home-screen widget (AppWidgetProvider, RemoteViews)
 └── notifications/   τοπικές υπενθυμίσεις μέσω AlarmManager
 ```
 
 ## Roadmap (κάποια στιγμή, ίσως)
 
-- [ ] Widgets στην αρχική οθόνη
 - [ ] Dark/light theme toggle (προς το παρόν είναι μόνο dark, γιατί έτσι το ήθελα)
 - [ ] Καλύτερο στατιστικό ανά κατηγορία
+- [ ] Πλήρης ποσοτική καταγραφή απευθείας από το widget (προς το παρόν κάνει μόνο toggle πλήρες/μηδέν)
 
 Pull requests / issues welcome, αν και είναι ακόμα πολύ προσωπικό project.
 
@@ -68,19 +74,23 @@ Not on the Play Store yet — it's a work-in-progress side project.
 ## What it does
 
 - ✅ **Yes/No** or **numeric-goal** habits (e.g. "Water — 2000 ml")
+- 🎯 Logging is a deliberate choice: **Fully done / Partially done (fine-tuned via slider) / Not done** — not silent, guessed taps
 - 🔁 Frequency on your own terms: daily, or X times/week, or X times/month
   (e.g. "clean the pet, 2x a week")
 - 📅 A 52-week heatmap, GitHub-contribution-graph style
 - 🔥 Streaks — current and personal best
+- ❄️ **Streak Freeze**: one "grace card" per habit per month, covers a missed day without breaking your streak
 - 🏆 A handful of lightweight badges for motivation (no gamification rabbit hole, just a nudge)
 - 📁 Your own custom suggestion categories, on top of the built-in ones
+- 🏠 **Home screen widget** — log your top 3 habits without even opening the app
+- 🇬🇷 🇬🇧 **Bilingual** (Greek/English) — switch in Settings, independent of system locale. Built-in suggestions translate automatically; anything you type yourself (habit titles, descriptions) always stays exactly as written, with no automatic translation
 - 💾 Export/import to `.json` — your data, whenever, wherever
 - 📴 No internet connection required. Ever.
 
 ## Stack
 
-Kotlin, Jetpack Compose, Room (SQLite), MVVM. No Firebase, no analytics SDK, no third-party
-SDKs at all.
+Kotlin, Jetpack Compose, Room (SQLite), MVVM, a classic AppWidget (RemoteViews) for the
+widget. No Firebase, no analytics SDK, no third-party SDKs at all.
 
 ## Running it
 
@@ -94,17 +104,19 @@ sync finish, hit Run on an emulator or a real device running Android 8+.
 
 ```
 app/src/main/java/com/habitpulse/app/
-├── data/           Room entities/DAOs, repositories, JSON backup
-├── domain/         streaks, badge engine, frequency math
-├── ui/              Compose screens (home, add/edit, history, badges, settings)
+├── data/           Room entities/DAOs, repositories, JSON backup, built-in suggestions
+├── domain/         streaks, streak freeze, badge engine, frequency math
+├── ui/              Compose screens (home, add/edit, history, badges, settings, suggestions)
+│   └── strings/     bilingual string system (EL/EN), independent of system locale
+├── widget/          home-screen widget (AppWidgetProvider, RemoteViews)
 └── notifications/   local reminders via AlarmManager
 ```
 
 ## Roadmap (someday, maybe)
 
-- [ ] Home screen widgets
 - [ ] Dark/light theme toggle (dark-only for now, because that's what I wanted)
 - [ ] Better per-category stats
+- [ ] Full numeric logging straight from the widget (currently just toggles full/zero)
 
 PRs / issues welcome, though it's still a pretty personal project.
 

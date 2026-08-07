@@ -36,6 +36,18 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name=".widget.HabitWidgetProvider"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.habitpulse.app.widget.ACTION_TOGGLE_HABIT" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/habit_pulse_widget_info" />
+        </receiver>
+
     </application>
 
 </manifest>

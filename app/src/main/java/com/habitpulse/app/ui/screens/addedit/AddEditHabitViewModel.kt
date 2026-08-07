@@ -36,7 +36,8 @@ class AddEditHabitViewModel(
     private val categoryRepository: CustomCategoryRepository,
     private val habitId: String?,
     private val templateId: String? = null,      // ενσωματωμένο πρότυπο (HabitTemplates.kt)
-    private val customTemplateId: String? = null // δικό του πρότυπο του χρήστη (Room)
+    private val customTemplateId: String? = null, // δικό του πρότυπο του χρήστη (Room)
+    private val lang: com.habitpulse.app.ui.strings.Lang = com.habitpulse.app.ui.strings.Lang.EL
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AddEditFormState(isLoading = habitId != null))
@@ -78,8 +79,8 @@ class AddEditHabitViewModel(
             val template = templateId?.let { com.habitpulse.app.data.templates.HabitTemplates.byId(it) }
             _state.value = if (template != null) {
                 AddEditFormState(
-                    title = template.title,
-                    description = template.description,
+                    title = template.title(lang),
+                    description = template.description(lang),
                     icon = template.icon,
                     colorHex = template.colorHex,
                     goalType = template.goalType,

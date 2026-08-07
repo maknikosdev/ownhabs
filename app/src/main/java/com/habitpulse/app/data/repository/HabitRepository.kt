@@ -16,7 +16,8 @@ import kotlinx.coroutines.flow.Flow
 class HabitRepository(
     private val habitDao: HabitDao,
     private val habitLogDao: HabitLogDao,
-    private val badgeDao: BadgeDao
+    private val badgeDao: BadgeDao,
+    private val streakFreezeDao: com.habitpulse.app.data.local.dao.StreakFreezeDao
 ) {
     private val badgeEngine = BadgeEngine(badgeDao, habitLogDao)
 
@@ -54,13 +55,73 @@ class HabitRepository(
         return badgeEngine.evaluate(habit, value)
     }
 
+    /**
+     * Ορίζει ΡΗΤΑ τη σημερινή τιμή μιας συνήθειας (Έγινε πλήρως / Εν μέρει / Δεν έγινε),
+     * αντικαθιστώντας οποιαδήποτε προηγούμενη καταγραφή της ίδιας ημέρας αντί να προσθέτει
+     * πάνω της. Value = 0.0 σημαίνει "Δεν έγινε" και απλά διαγράφει τη σημερινή καταγραφή.
+     */
+    suspend fun setTodayValue(habit: HabitEntity, value: Double, notes: String = ""): List<BadgeEntity> {
+        val zone = java.time.ZoneId.systemDefault()
+        val today = java.time.LocalDate.now(zone)
+        val dayStart = today.atStartOfDay(zone).toInstant().toEpochMilli()
+        val dayEnd = today.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli() - 1
+        habitLogDao.deleteLogsInRange(habit.id, dayStart, dayEnd)
+        if (value <= 0.0) return emptyList()
+        habitLogDao.upsert(HabitLogEntity(habitId = habit.id, timestamp = System.currentTimeMillis(), value = value, notes = notes))
+        return badgeEngine.evaluate(habit, value)
+    }
+
     suspend fun updateLog(log: HabitLogEntity) = habitLogDao.upsert(log)
     suspend fun deleteLog(log: HabitLogEntity) = habitLogDao.deleteById(log.id)
 
     suspend fun getStreak(habitId: String): StreakResult {
         val logs = habitLogDao.getAllForHabit(habitId)
-        return StreakCalculator.calculate(logs)
+        val frozen = streakFreezeDao.getForHabit(habitId)
+            .map { java.time.LocalDate.ofEpochDay(it.dateEpochDay) }
+            .toSet()
+        return StreakCalculator.calculate(logs, frozen)
     }
+
+    // --- Streak Freeze ("κάρτα χάρης" που δεν σπάει το σερί) ---
+    fun observeFreezes(habitId: String) = streakFreezeDao.observeForHabit(habitId)
+
+    suspend fun getFrozenDatesOnce(habitId: String): Set<java.time.LocalDate> =
+        streakFreezeDao.getForHabit(habitId).map { java.time.LocalDate.ofEpochDay(it.dateEpochDay) }.toSet()
+
+    suspend fun freezesUsedThisMonth(habitId: String, referenceDate: java.time.LocalDate = java.time.LocalDate.now()): Int {
+        val start = referenceDate.withDayOfMonth(1).toEpochDay()
+        val end = referenceDate.withDayOfMonth(referenceDate.lengthOfMonth()).toEpochDay()
+        return streakFreezeDao.countInMonth(habitId, start, end)
+    }
+
+    sealed class FreezeResult {
+        object Applied : FreezeResult()
+        object AlreadyLogged : FreezeResult()
+        object AlreadyFrozen : FreezeResult()
+        object MonthlyLimitReached : FreezeResult()
+    }
+
+    /** Εφαρμόζει streak freeze σε μια ημέρα, αν δεν έχει ήδη καταγραφή και δεν έχει ξεπεραστεί το μηνιαίο όριο. */
+    suspend fun applyStreakFreeze(habitId: String, date: java.time.LocalDate): FreezeResult {
+        val zone = java.time.ZoneId.systemDefault()
+        val dayStart = date.atStartOfDay(zone).toInstant().toEpochMilli()
+        val dayEnd = date.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli() - 1
+        if (habitLogDao.getLogsForDay(habitId, dayStart, dayEnd).isNotEmpty()) {
+            return FreezeResult.AlreadyLogged
+        }
+        if (streakFreezeDao.findForDate(habitId, date.toEpochDay()) != null) {
+            return FreezeResult.AlreadyFrozen
+        }
+        if (freezesUsedThisMonth(habitId, date) >= com.habitpulse.app.data.local.entity.StreakFreezeEntity.FREEZES_PER_MONTH) {
+            return FreezeResult.MonthlyLimitReached
+        }
+        streakFreezeDao.insert(
+            com.habitpulse.app.data.local.entity.StreakFreezeEntity(habitId = habitId, dateEpochDay = date.toEpochDay())
+        )
+        return FreezeResult.Applied
+    }
+
+    suspend fun removeStreakFreeze(id: String) = streakFreezeDao.deleteById(id)
 
     // --- Badges ---
     fun observeBadges(): Flow<List<BadgeEntity>> = badgeDao.observeBadges()

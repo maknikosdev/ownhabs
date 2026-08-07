@@ -20,7 +20,7 @@ data class HomeHabitUiState(
     val progress: PeriodProgress  // πρόοδος μέσα στην τρέχουσα περίοδο (ημέρα/εβδομάδα/μήνας)
 )
 
-class HomeViewModel(private val repository: HabitRepository) : ViewModel() {
+class HomeViewModel(private val repository: HabitRepository, private val appContext: android.content.Context) : ViewModel() {
 
     private val _uiState = MutableStateFlow<List<HomeHabitUiState>>(emptyList())
     val uiState: StateFlow<List<HomeHabitUiState>> = _uiState.asStateFlow()
@@ -61,6 +61,19 @@ class HomeViewModel(private val repository: HabitRepository) : ViewModel() {
         viewModelScope.launch {
             val unlocked = repository.logHabit(habit, amount)
             refresh(_uiState.value.map { it.habit })
+            com.habitpulse.app.widget.HabitWidgetProvider.requestUpdate(appContext)
+            if (unlocked.isNotEmpty()) {
+                onBadgesUnlocked(unlocked.map { it.title })
+            }
+        }
+    }
+
+    /** Ορίζει ρητά τη σημερινή τιμή (Έγινε πλήρως / Εν μέρει / Δεν έγινε) από το QuickLogDialog. */
+    fun setTodayValue(habit: HabitEntity, value: Double, onBadgesUnlocked: (List<String>) -> Unit = {}) {
+        viewModelScope.launch {
+            val unlocked = repository.setTodayValue(habit, value)
+            refresh(_uiState.value.map { it.habit })
+            com.habitpulse.app.widget.HabitWidgetProvider.requestUpdate(appContext)
             if (unlocked.isNotEmpty()) {
                 onBadgesUnlocked(unlocked.map { it.title })
             }
@@ -69,11 +82,17 @@ class HomeViewModel(private val repository: HabitRepository) : ViewModel() {
 
     /** Αρχειοθέτηση: η συνήθεια κρύβεται από την Αρχική αλλά διατηρεί το ιστορικό της. */
     fun archiveHabit(habit: HabitEntity) {
-        viewModelScope.launch { repository.archiveHabit(habit.id) }
+        viewModelScope.launch {
+            repository.archiveHabit(habit.id)
+            com.habitpulse.app.widget.HabitWidgetProvider.requestUpdate(appContext)
+        }
     }
 
     /** Μόνιμη διαγραφή: αφαιρεί τη συνήθεια ΚΑΙ όλο το ιστορικό καταγραφών της (cascade). */
     fun deleteHabitPermanently(habit: HabitEntity) {
-        viewModelScope.launch { repository.deleteHabitPermanently(habit.id) }
+        viewModelScope.launch {
+            repository.deleteHabitPermanently(habit.id)
+            com.habitpulse.app.widget.HabitWidgetProvider.requestUpdate(appContext)
+        }
     }
 }

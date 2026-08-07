@@ -34,6 +34,9 @@ interface HabitLogDao {
     @Query("DELETE FROM habit_logs WHERE id = :id")
     suspend fun deleteById(id: String)
 
+    @Query("DELETE FROM habit_logs WHERE habitId = :habitId AND timestamp BETWEEN :dayStart AND :dayEnd")
+    suspend fun deleteLogsInRange(habitId: String, dayStart: Long, dayEnd: Long)
+
     @Query("SELECT COUNT(*) FROM habit_logs WHERE habitId = :habitId")
     suspend fun countForHabit(habitId: String): Int
 

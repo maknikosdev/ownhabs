@@ -13,7 +13,8 @@ class AppContainer(context: Context) {
     val repository = HabitRepository(
         habitDao = database.habitDao(),
         habitLogDao = database.habitLogDao(),
-        badgeDao = database.badgeDao()
+        badgeDao = database.badgeDao(),
+        streakFreezeDao = database.streakFreezeDao()
     )
 
     val categoryRepository = CustomCategoryRepository(

@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.AcUnit
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
@@ -18,6 +19,8 @@ import com.habitpulse.app.data.local.entity.HabitLogEntity
 import com.habitpulse.app.data.repository.HabitRepository
 import com.habitpulse.app.ui.components.HeatmapGrid
 import com.habitpulse.app.ui.navigation.SimpleViewModelFactory
+import com.habitpulse.app.ui.strings.AppStrings
+import com.habitpulse.app.ui.strings.LocalStrings
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -30,10 +33,12 @@ fun HistoryScreen(
     habitId: String,
     onBack: () -> Unit
 ) {
+    val strings = LocalStrings.current
     val viewModel: HistoryViewModel = viewModel(
         factory = SimpleViewModelFactory { HistoryViewModel(repository, habitId) }
     )
     val state by viewModel.state.collectAsState()
+    val freezeMessage by viewModel.freezeMessage.collectAsState()
     var editingDate by remember { mutableStateOf<LocalDate?>(null) }
     var editingLog by remember { mutableStateOf<HabitLogEntity?>(null) }
 
@@ -43,28 +48,53 @@ fun HistoryScreen(
             .getOrDefault(androidx.compose.ui.graphics.Color(0xFF2FB6C0))
     } ?: androidx.compose.ui.graphics.Color(0xFF2FB6C0)
 
+    val freezeMessageText = freezeMessage?.let { msgTypeToText(it, strings) }
+    freezeMessage?.let { msg ->
+        LaunchedEffect(msg) {
+            kotlinx.coroutines.delay(2600)
+            viewModel.clearFreezeMessage()
+        }
+    }
+
     if (editingDate != null && habit != null) {
+        val alreadyFrozen = state.frozenDates.contains(editingDate)
+        val hasLogThatDay = editingLog != null
+        val freezesLeft = (state.freezesAvailableThisMonth - state.freezesUsedThisMonth).coerceAtLeast(0)
+
         LogEditDialog(
             date = editingDate!!,
             habit = habit,
+            strings = strings,
             existing = editingLog,
+            canFreeze = !hasLogThatDay && !alreadyFrozen && freezesLeft > 0 && editingDate!! != LocalDate.now(),
+            freezesLeft = freezesLeft,
+            isFrozen = alreadyFrozen,
             onDismiss = { editingDate = null; editingLog = null },
             onSave = { value, notes ->
                 viewModel.addOrEditLog(editingDate!!, value, notes, editingLog)
                 editingDate = null; editingLog = null
             },
-            onDelete = editingLog?.let { log -> { viewModel.deleteLog(log); editingDate = null; editingLog = null } }
+            onDelete = editingLog?.let { log -> { viewModel.deleteLog(log); editingDate = null; editingLog = null } },
+            onFreeze = {
+                viewModel.applyStreakFreeze(editingDate!!)
+                editingDate = null; editingLog = null
+            }
         )
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(habit?.title ?: "Ιστορικό") },
+                title = { Text(habit?.title ?: strings.historyFallbackTitle) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Πίσω") }
+                    IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = strings.back) }
                 }
             )
+        },
+        snackbarHost = {
+            freezeMessageText?.let { msg ->
+                Snackbar(modifier = Modifier.padding(12.dp)) { Text(msg) }
+            }
         }
     ) { padding ->
         if (habit == null) {
@@ -81,18 +111,46 @@ fun HistoryScreen(
         ) {
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    StatChip("🔥 Τρέχον Σερί", "${state.streak.current}")
-                    StatChip("🏆 Καλύτερο Σερί", "${state.streak.best}")
-                    StatChip("✅ Σύνολο", "${state.totalCompletions}")
+                    StatChip("🔥 ${strings.historyCurrentStreak}", "${state.streak.current}")
+                    StatChip("🏆 ${strings.historyBestStreak}", "${state.streak.best}")
+                    StatChip("✅ ${strings.historyTotal}", "${state.totalCompletions}")
+                }
+            }
+
+            item {
+                Card {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.AcUnit, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Spacer(Modifier.width(10.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(strings.historyStreakFreezeTitle, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                            Text(
+                                strings.historyStreakFreezeDesc,
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
+                        Text(
+                            strings.historyStreakFreezeAvailable(
+                                (state.freezesAvailableThisMonth - state.freezesUsedThisMonth).coerceAtLeast(0),
+                                state.freezesAvailableThisMonth
+                            ),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
 
             item {
                 Column {
-                    Text("Πλέγμα Συνέπειας (52 εβδομάδες)", style = MaterialTheme.typography.titleMedium)
+                    Text(strings.historyHeatmapTitle, style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.height(8.dp))
                     HeatmapGrid(
                         dailyIntensity = state.dailyIntensity,
+                        frozenDates = state.frozenDates,
                         baseColor = color,
                         onDayClick = { date ->
                             editingLog = state.logs.firstOrNull {
@@ -102,14 +160,14 @@ fun HistoryScreen(
                         }
                     )
                     Text(
-                        "Πάτησε σε οποιαδήποτε ημέρα για να προσθέσεις, αλλάξεις ή διαγράψεις μια καταγραφή.",
+                        strings.historyHeatmapHint,
                         style = MaterialTheme.typography.labelSmall
                     )
                 }
             }
 
             item {
-                Text("Πρόσφατες Καταγραφές", style = MaterialTheme.typography.titleMedium)
+                Text(strings.historyRecentLogs, style = MaterialTheme.typography.titleMedium)
             }
 
             items(state.logs, key = { it.id }) { log ->
@@ -152,19 +210,31 @@ private fun LogRow(log: HabitLogEntity, unit: String, onEdit: () -> Unit) {
                     Text(log.notes, style = MaterialTheme.typography.labelSmall)
                 }
             }
-            IconButton(onClick = onEdit) { Icon(Icons.Default.Edit, contentDescription = "Επεξεργασία") }
+            IconButton(onClick = onEdit) { Icon(Icons.Default.Edit, contentDescription = null) }
         }
     }
+}
+
+private fun msgTypeToText(type: FreezeMsgType, strings: AppStrings): String = when (type) {
+    FreezeMsgType.APPLIED -> strings.freezeMsgApplied
+    FreezeMsgType.ALREADY_LOGGED -> strings.freezeMsgAlreadyLogged
+    FreezeMsgType.ALREADY_FROZEN -> strings.freezeMsgAlreadyFrozen
+    FreezeMsgType.LIMIT_REACHED -> strings.freezeMsgLimitReached
 }
 
 @Composable
 private fun LogEditDialog(
     date: LocalDate,
     habit: com.habitpulse.app.data.local.entity.HabitEntity,
+    strings: AppStrings,
     existing: HabitLogEntity?,
+    canFreeze: Boolean,
+    freezesLeft: Int,
+    isFrozen: Boolean,
     onDismiss: () -> Unit,
     onSave: (Double, String) -> Unit,
-    onDelete: (() -> Unit)?
+    onDelete: (() -> Unit)?,
+    onFreeze: () -> Unit
 ) {
     var value by remember { mutableStateOf((existing?.value ?: habit.targetValue).toString()) }
     var notes by remember { mutableStateOf(existing?.notes ?: "") }
@@ -175,27 +245,43 @@ private fun LogEditDialog(
         title = { Text(formatter.format(date)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = value,
-                    onValueChange = { value = it },
-                    label = { Text(if (habit.goalType.name == "BOOLEAN") "1 = ολοκληρώθηκε, 0 = όχι" else "Τιμή (${habit.unit})") }
-                )
-                OutlinedTextField(
-                    value = notes,
-                    onValueChange = { notes = it },
-                    label = { Text("Σημειώσεις") }
-                )
+                if (isFrozen) {
+                    Text(strings.historyFrozenDayNotice, style = MaterialTheme.typography.bodyMedium)
+                } else {
+                    OutlinedTextField(
+                        value = value,
+                        onValueChange = { value = it },
+                        label = { Text(if (habit.goalType.name == "BOOLEAN") strings.historyValueLabelBoolean else strings.historyValueLabelNumeric(habit.unit)) }
+                    )
+                    OutlinedTextField(
+                        value = notes,
+                        onValueChange = { notes = it },
+                        label = { Text(strings.historyNotesLabel) }
+                    )
+                    if (canFreeze) {
+                        Spacer(Modifier.height(4.dp))
+                        OutlinedButton(onClick = onFreeze, modifier = Modifier.fillMaxWidth()) {
+                            Icon(Icons.Default.AcUnit, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text(strings.historyUseFreezeButton(freezesLeft))
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
-            TextButton(onClick = { onSave(value.toDoubleOrNull() ?: 0.0, notes) }) { Text("Αποθήκευση") }
+            if (!isFrozen) {
+                TextButton(onClick = { onSave(value.toDoubleOrNull() ?: 0.0, notes) }) { Text(strings.save) }
+            } else {
+                TextButton(onClick = onDismiss) { Text(strings.close) }
+            }
         },
         dismissButton = {
             Row {
                 if (onDelete != null) {
-                    TextButton(onClick = onDelete) { Icon(Icons.Default.Delete, contentDescription = null); Text(" Διαγραφή") }
+                    TextButton(onClick = onDelete) { Icon(Icons.Default.Delete, contentDescription = null); Text(" " + strings.delete) }
                 }
-                TextButton(onClick = onDismiss) { Text("Ακύρωση") }
+                if (!isFrozen) TextButton(onClick = onDismiss) { Text(strings.cancel) }
             }
         }
     )

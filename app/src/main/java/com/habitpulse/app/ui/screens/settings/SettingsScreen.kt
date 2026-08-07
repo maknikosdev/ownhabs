@@ -10,11 +10,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.habitpulse.app.data.backup.BackupManager
 import com.habitpulse.app.data.backup.ImportMode
 import com.habitpulse.app.data.backup.ImportResult
+import com.habitpulse.app.ui.strings.Lang
+import com.habitpulse.app.ui.strings.LocalLang
+import com.habitpulse.app.ui.strings.LocalStrings
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -22,7 +24,13 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(backupManager: BackupManager, onBack: () -> Unit) {
+fun SettingsScreen(
+    backupManager: BackupManager,
+    onBack: () -> Unit,
+    onLanguageChange: (Lang) -> Unit
+) {
+    val strings = LocalStrings.current
+    val currentLang = LocalLang.current
     val scope = rememberCoroutineScope()
     var statusMessage by remember { mutableStateOf<String?>(null) }
     var pendingImportUri by remember { mutableStateOf<Uri?>(null) }
@@ -34,7 +42,7 @@ fun SettingsScreen(backupManager: BackupManager, onBack: () -> Unit) {
         if (uri != null) {
             scope.launch {
                 val ok = backupManager.exportTo(uri)
-                statusMessage = if (ok) "Η εξαγωγή ολοκληρώθηκε επιτυχώς." else "Η εξαγωγή απέτυχε."
+                statusMessage = if (ok) "✅" else "⚠️"
             }
         }
     }
@@ -51,9 +59,14 @@ fun SettingsScreen(backupManager: BackupManager, onBack: () -> Unit) {
     if (showImportModeDialog && pendingImportUri != null) {
         AlertDialog(
             onDismissRequest = { showImportModeDialog = false },
-            title = { Text("Τρόπος Εισαγωγής") },
+            title = { Text(if (currentLang == Lang.EL) "Τρόπος Εισαγωγής" else "Import Mode") },
             text = {
-                Text("«Αντικατάσταση» διαγράφει τα τρέχοντα τοπικά δεδομένα. «Συγχώνευση» ενώνει τις εγγραφές βάσει UUID/Timestamp χωρίς διπλότυπα.")
+                Text(
+                    if (currentLang == Lang.EL)
+                        "«Αντικατάσταση» διαγράφει τα τρέχοντα τοπικά δεδομένα. «Συγχώνευση» ενώνει τις εγγραφές χωρίς διπλότυπα."
+                    else
+                        "\"Overwrite\" deletes your current local data. \"Merge\" combines records without duplicates."
+                )
             },
             confirmButton = {
                 TextButton(onClick = {
@@ -61,9 +74,9 @@ fun SettingsScreen(backupManager: BackupManager, onBack: () -> Unit) {
                     showImportModeDialog = false
                     scope.launch {
                         val result = backupManager.importFrom(uri, ImportMode.OVERWRITE)
-                        statusMessage = describeResult(result)
+                        statusMessage = describeResult(result, currentLang)
                     }
-                }) { Text("Αντικατάσταση") }
+                }) { Text(if (currentLang == Lang.EL) "Αντικατάσταση" else "Overwrite") }
             },
             dismissButton = {
                 TextButton(onClick = {
@@ -71,9 +84,9 @@ fun SettingsScreen(backupManager: BackupManager, onBack: () -> Unit) {
                     showImportModeDialog = false
                     scope.launch {
                         val result = backupManager.importFrom(uri, ImportMode.MERGE)
-                        statusMessage = describeResult(result)
+                        statusMessage = describeResult(result, currentLang)
                     }
-                }) { Text("Συγχώνευση") }
+                }) { Text(if (currentLang == Lang.EL) "Συγχώνευση" else "Merge") }
             }
         )
     }
@@ -81,9 +94,9 @@ fun SettingsScreen(backupManager: BackupManager, onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Ρυθμίσεις & Τοπικό Backup") },
+                title = { Text(strings.settingsTitle) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Πίσω") }
+                    IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = strings.back) }
                 }
             )
         }
@@ -92,28 +105,44 @@ fun SettingsScreen(backupManager: BackupManager, onBack: () -> Unit) {
             modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                "Η εφαρμογή είναι 100% τοπική (Local-First). Δεν υπάρχει backend ή cloud server — όλα τα δεδομένα σου μένουν στη συσκευή σου.",
-                style = MaterialTheme.typography.bodyMedium
-            )
+            Text(strings.settingsPrivacyBanner, style = MaterialTheme.typography.bodyMedium)
 
             Card {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Εξαγωγή Δεδομένων", style = MaterialTheme.typography.titleMedium)
-                    Text("Αποθηκεύει όλες τις συνήθειες, το ιστορικό και τα σήματα σε ένα αρχείο .json.", style = MaterialTheme.typography.bodyMedium)
-                    Button(onClick = {
-                        val fileName = "habitpulse_backup_${SimpleDateFormat("yyyyMMdd_HHmm", Locale.getDefault()).format(Date())}.json"
-                        exportLauncher.launch(fileName)
-                    }) { Text("Εξαγωγή σε .json") }
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(strings.settingsLanguageTitle, style = MaterialTheme.typography.titleMedium)
+                    Text(strings.settingsLanguageDesc, style = MaterialTheme.typography.bodyMedium)
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        FilterChip(
+                            selected = currentLang == Lang.EL,
+                            onClick = { onLanguageChange(Lang.EL) },
+                            label = { Text("🇬🇷 Ελληνικά") }
+                        )
+                        FilterChip(
+                            selected = currentLang == Lang.EN,
+                            onClick = { onLanguageChange(Lang.EN) },
+                            label = { Text("🇬🇧 English") }
+                        )
+                    }
                 }
             }
 
             Card {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Εισαγωγή Δεδομένων", style = MaterialTheme.typography.titleMedium)
-                    Text("Φόρτωσε ένα αρχείο .json από άλλη συσκευή ή παλιό backup.", style = MaterialTheme.typography.bodyMedium)
+                    Text(strings.settingsExportTitle, style = MaterialTheme.typography.titleMedium)
+                    Text(strings.settingsExportDesc, style = MaterialTheme.typography.bodyMedium)
+                    Button(onClick = {
+                        val fileName = "habitpulse_backup_${SimpleDateFormat("yyyyMMdd_HHmm", Locale.getDefault()).format(Date())}.json"
+                        exportLauncher.launch(fileName)
+                    }) { Text(strings.settingsExportButton) }
+                }
+            }
+
+            Card {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(strings.settingsImportTitle, style = MaterialTheme.typography.titleMedium)
+                    Text(strings.settingsImportDesc, style = MaterialTheme.typography.bodyMedium)
                     Button(onClick = { importLauncher.launch(arrayOf("application/json")) }) {
-                        Text("Επιλογή αρχείου .json")
+                        Text(strings.settingsImportButton)
                     }
                 }
             }
@@ -127,7 +156,11 @@ fun SettingsScreen(backupManager: BackupManager, onBack: () -> Unit) {
     }
 }
 
-private fun describeResult(result: ImportResult): String = when (result) {
-    is ImportResult.Success -> "Εισήχθησαν ${result.habitsImported} συνήθειες και ${result.logsImported} καταγραφές."
-    is ImportResult.InvalidFile -> "Μη έγκυρο αρχείο: ${result.reason}"
+private fun describeResult(result: ImportResult, lang: Lang): String = when (result) {
+    is ImportResult.Success ->
+        if (lang == Lang.EL) "Εισήχθησαν ${result.habitsImported} συνήθειες και ${result.logsImported} καταγραφές."
+        else "Imported ${result.habitsImported} habits and ${result.logsImported} logs."
+    is ImportResult.InvalidFile ->
+        if (lang == Lang.EL) "Μη έγκυρο αρχείο: ${result.reason}"
+        else "Invalid file: ${result.reason}"
 }

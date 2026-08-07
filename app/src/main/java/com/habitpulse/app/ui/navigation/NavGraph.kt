@@ -44,7 +44,8 @@ object Routes {
 fun HabitPulseNavGraph(
     repository: HabitRepository,
     categoryRepository: CustomCategoryRepository,
-    backupManager: BackupManager
+    backupManager: BackupManager,
+    onLanguageChange: (com.habitpulse.app.ui.strings.Lang) -> Unit
 ) {
     val navController = rememberNavController()
 
@@ -128,7 +129,11 @@ fun HabitPulseNavGraph(
         }
 
         composable(Routes.SETTINGS) {
-            SettingsScreen(backupManager = backupManager, onBack = { navController.popBackStack() })
+            SettingsScreen(
+                backupManager = backupManager,
+                onBack = { navController.popBackStack() },
+                onLanguageChange = onLanguageChange
+            )
         }
     }
 }

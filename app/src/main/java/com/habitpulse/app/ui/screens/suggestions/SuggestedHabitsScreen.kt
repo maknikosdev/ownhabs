@@ -25,6 +25,9 @@ import com.habitpulse.app.data.templates.HabitTemplate
 import com.habitpulse.app.data.templates.HabitTemplates
 import com.habitpulse.app.domain.FrequencyCalculator
 import com.habitpulse.app.ui.navigation.SimpleViewModelFactory
+import com.habitpulse.app.ui.strings.AppStrings
+import com.habitpulse.app.ui.strings.LocalStrings
+import com.habitpulse.app.ui.strings.LocalLang
 
 private val CATEGORY_ICONS = listOf("📁", "🐾", "🏠", "💼", "🎨", "⚽", "🚗", "💡", "🌍", "🎓")
 
@@ -39,6 +42,8 @@ fun SuggestedHabitsScreen(
     onEditTemplate: (categoryId: String, templateId: String) -> Unit,
     onBack: () -> Unit
 ) {
+    val strings = LocalStrings.current
+    val lang = LocalLang.current
     val viewModel: SuggestedHabitsViewModel = viewModel(
         factory = SimpleViewModelFactory { SuggestedHabitsViewModel(categoryRepository) }
     )
@@ -54,6 +59,7 @@ fun SuggestedHabitsScreen(
     if (showCategoryDialog) {
         CategoryEditDialog(
             existing = categoryDialog,
+            strings = strings,
             onDismiss = { showCategoryDialog = false },
             onConfirm = { name, icon ->
                 if (categoryDialog == null) viewModel.createCategory(name, icon)
@@ -66,21 +72,21 @@ fun SuggestedHabitsScreen(
     if (categoryToDelete != null) {
         AlertDialog(
             onDismissRequest = { categoryToDelete = null },
-            title = { Text("Διαγραφή κατηγορίας;") },
-            text = { Text("Θα διαγραφούν η κατηγορία «${categoryToDelete!!.name}» και όλες οι προτάσεις μέσα της. Δεν επηρεάζει τις συνήθειες που έχεις ήδη δημιουργήσει.") },
+            title = { Text(strings.categoryDeleteConfirmTitle) },
+            text = { Text(strings.categoryDeleteConfirmText(categoryToDelete!!.name)) },
             confirmButton = {
-                TextButton(onClick = { viewModel.deleteCategory(categoryToDelete!!.id); categoryToDelete = null }) { Text("Διαγραφή") }
+                TextButton(onClick = { viewModel.deleteCategory(categoryToDelete!!.id); categoryToDelete = null }) { Text(strings.delete) }
             },
-            dismissButton = { TextButton(onClick = { categoryToDelete = null }) { Text("Ακύρωση") } }
+            dismissButton = { TextButton(onClick = { categoryToDelete = null }) { Text(strings.cancel) } }
         )
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Νέα Συνήθεια") },
+                title = { Text(strings.suggestionsTitle) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Πίσω") }
+                    IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = strings.back) }
                 }
             )
         }
@@ -91,15 +97,12 @@ fun SuggestedHabitsScreen(
         ) {
             item {
                 Column(Modifier.padding(16.dp)) {
-                    Text(
-                        "Διάλεξε μια έτοιμη πρόταση για γρήγορη έναρξη, ή φτιάξε τη δική σου συνήθεια από το μηδέν.",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                    Text(strings.suggestionsIntro, style = MaterialTheme.typography.bodyMedium)
                     Spacer(Modifier.height(12.dp))
                     OutlinedButton(onClick = onCustomHabit, modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("Δημιουργία Προσαρμοσμένης Συνήθειας")
+                        Text(strings.suggestionsCustomButton)
                     }
                     Spacer(Modifier.height(8.dp))
                     Button(
@@ -108,16 +111,15 @@ fun SuggestedHabitsScreen(
                     ) {
                         Icon(Icons.Default.CreateNewFolder, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("Νέα Κατηγορία")
+                        Text(strings.suggestionsNewCategory)
                     }
                 }
             }
 
-            // ---- Οι κατηγορίες του χρήστη (πλήρες CRUD) ----
             if (customCategories.isNotEmpty()) {
                 item {
                     Text(
-                        "Οι Κατηγορίες μου",
+                        strings.suggestionsMyCategories,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -127,6 +129,7 @@ fun SuggestedHabitsScreen(
                     item(key = "cat-${catState.category.id}") {
                         CategoryHeaderRow(
                             category = catState.category,
+                            strings = strings,
                             menuOpen = openMenuForCategory == catState.category.id,
                             onToggleMenu = { openMenuForCategory = if (openMenuForCategory == catState.category.id) null else catState.category.id },
                             onDismissMenu = { openMenuForCategory = null },
@@ -138,7 +141,7 @@ fun SuggestedHabitsScreen(
                     if (catState.templates.isEmpty()) {
                         item(key = "cat-empty-${catState.category.id}") {
                             Text(
-                                "Δεν έχεις προσθέσει ακόμα προτάσεις εδώ.",
+                                strings.templatesEmptyInCategory,
                                 style = MaterialTheme.typography.labelSmall,
                                 modifier = Modifier.padding(horizontal = 32.dp, vertical = 4.dp)
                             )
@@ -147,6 +150,7 @@ fun SuggestedHabitsScreen(
                     items(catState.templates, key = { it.id }) { template ->
                         CustomTemplateRow(
                             template = template,
+                            strings = strings,
                             menuOpen = openMenuForTemplate == template.id,
                             onClick = { onPickCustomTemplate(template) },
                             onToggleMenu = { openMenuForTemplate = if (openMenuForTemplate == template.id) null else template.id },
@@ -158,10 +162,9 @@ fun SuggestedHabitsScreen(
                 }
             }
 
-            // ---- Ενσωματωμένες κατηγορίες (read-only προτάσεις της εφαρμογής) ----
             item {
                 Text(
-                    "Έτοιμες Προτάσεις",
+                    strings.suggestionsReadyMade,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -170,13 +173,13 @@ fun SuggestedHabitsScreen(
             builtInGrouped.forEach { (category, templates) ->
                 item {
                     Text(
-                        category,
+                        category.label(lang),
                         style = MaterialTheme.typography.titleSmall,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
                     )
                 }
                 items(templates, key = { it.id }) { template ->
-                    BuiltInTemplateRow(template = template, onClick = { onPickTemplate(template) })
+                    BuiltInTemplateRow(template = template, lang = lang, onClick = { onPickTemplate(template) })
                 }
             }
         }
@@ -186,6 +189,7 @@ fun SuggestedHabitsScreen(
 @Composable
 private fun CategoryHeaderRow(
     category: CategoryEntity,
+    strings: AppStrings,
     menuOpen: Boolean,
     onToggleMenu: () -> Unit,
     onDismissMenu: () -> Unit,
@@ -200,17 +204,17 @@ private fun CategoryHeaderRow(
         Text(category.icon, style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.width(8.dp))
         Text(category.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-        IconButton(onClick = onAddTemplate) { Icon(Icons.Default.Add, contentDescription = "Προσθήκη πρότασης") }
+        IconButton(onClick = onAddTemplate) { Icon(Icons.Default.Add, contentDescription = strings.categoryAddTemplateTooltip) }
         Box {
-            IconButton(onClick = onToggleMenu) { Icon(Icons.Default.MoreVert, contentDescription = "Επιλογές κατηγορίας") }
+            IconButton(onClick = onToggleMenu) { Icon(Icons.Default.MoreVert, contentDescription = null) }
             DropdownMenu(expanded = menuOpen, onDismissRequest = onDismissMenu) {
                 DropdownMenuItem(
-                    text = { Text("Μετονομασία") },
+                    text = { Text(strings.categoryRename) },
                     leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
                     onClick = onRename
                 )
                 DropdownMenuItem(
-                    text = { Text("Διαγραφή Κατηγορίας") },
+                    text = { Text(strings.categoryDelete) },
                     leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
                     onClick = onDelete
                 )
@@ -222,6 +226,7 @@ private fun CategoryHeaderRow(
 @Composable
 private fun CustomTemplateRow(
     template: CustomTemplateEntity,
+    strings: AppStrings,
     menuOpen: Boolean,
     onClick: () -> Unit,
     onToggleMenu: () -> Unit,
@@ -245,7 +250,7 @@ private fun CustomTemplateRow(
                 Text(
                     buildString {
                         if (template.description.isNotBlank()) append(template.description + " · ")
-                        if (template.goalType.name == "NUMERIC") append("Στόχος: ${template.targetValue.toInt()} ${template.unit} · ")
+                        if (template.goalType.name == "NUMERIC") append("${template.targetValue.toInt()} ${template.unit} · ")
                         append(FrequencyCalculator.describe(
                             com.habitpulse.app.data.local.entity.HabitEntity(
                                 title = "", frequencyPeriod = template.frequencyPeriod, timesPerPeriod = template.timesPerPeriod
@@ -256,10 +261,10 @@ private fun CustomTemplateRow(
                 )
             }
             Box {
-                IconButton(onClick = onToggleMenu) { Icon(Icons.Default.MoreVert, contentDescription = "Επιλογές") }
+                IconButton(onClick = onToggleMenu) { Icon(Icons.Default.MoreVert, contentDescription = null) }
                 DropdownMenu(expanded = menuOpen, onDismissRequest = onDismissMenu) {
-                    DropdownMenuItem(text = { Text("Επεξεργασία") }, leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) }, onClick = onEdit)
-                    DropdownMenuItem(text = { Text("Διαγραφή") }, leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) }, onClick = onDelete)
+                    DropdownMenuItem(text = { Text(strings.edit) }, leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) }, onClick = onEdit)
+                    DropdownMenuItem(text = { Text(strings.delete) }, leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) }, onClick = onDelete)
                 }
             }
         }
@@ -267,7 +272,7 @@ private fun CustomTemplateRow(
 }
 
 @Composable
-private fun BuiltInTemplateRow(template: HabitTemplate, onClick: () -> Unit) {
+private fun BuiltInTemplateRow(template: HabitTemplate, lang: com.habitpulse.app.ui.strings.Lang, onClick: () -> Unit) {
     val color = runCatching { Color(android.graphics.Color.parseColor(template.colorHex)) }.getOrDefault(Color(0xFF2FB6C0))
 
     Card(
@@ -280,11 +285,11 @@ private fun BuiltInTemplateRow(template: HabitTemplate, onClick: () -> Unit) {
             }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(template.title, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium)
+                Text(template.title(lang), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium)
                 Text(
                     buildString {
-                        append(template.description)
-                        if (template.goalType.name == "NUMERIC") append(" · Στόχος: ${template.targetValue.toInt()} ${template.unit}")
+                        append(template.description(lang))
+                        if (template.goalType.name == "NUMERIC") append(" · ${template.targetValue.toInt()} ${template.unit}")
                         append(" · " + FrequencyCalculator.describe(
                             com.habitpulse.app.data.local.entity.HabitEntity(
                                 title = "", frequencyPeriod = template.frequencyPeriod, timesPerPeriod = template.timesPerPeriod
@@ -301,6 +306,7 @@ private fun BuiltInTemplateRow(template: HabitTemplate, onClick: () -> Unit) {
 @Composable
 private fun CategoryEditDialog(
     existing: CategoryEntity?,
+    strings: AppStrings,
     onDismiss: () -> Unit,
     onConfirm: (name: String, icon: String) -> Unit
 ) {
@@ -309,13 +315,13 @@ private fun CategoryEditDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (existing == null) "Νέα Κατηγορία" else "Μετονομασία Κατηγορίας") },
+        title = { Text(if (existing == null) strings.categoryNewTitle else strings.categoryRenameTitle) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Όνομα (π.χ. Κατοικίδιο)") },
+                    label = { Text(strings.categoryNameLabel) },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -327,9 +333,9 @@ private fun CategoryEditDialog(
         },
         confirmButton = {
             TextButton(onClick = { onConfirm(name, icon) }, enabled = name.isNotBlank()) {
-                Text(if (existing == null) "Δημιουργία" else "Αποθήκευση")
+                Text(if (existing == null) strings.categoryCreateButton else strings.save)
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Ακύρωση") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(strings.cancel) } }
     )
 }

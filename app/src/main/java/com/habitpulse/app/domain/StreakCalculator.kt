@@ -8,20 +8,24 @@ import java.time.ZoneId
 data class StreakResult(val current: Int, val best: Int)
 
 /**
- * Streaks are calculated on distinct calendar days that have at least one log.
- * (Frequency-per-week habits are treated as "any completed day counts"; a more
- * advanced version could skip non-scheduled days, but this keeps the engine simple
- * and predictable for the user.)
+ * Streaks υπολογίζονται σε ξεχωριστές ημερολογιακές ημέρες που έχουν τουλάχιστον μία
+ * καταγραφή, Ή που έχουν χρησιμοποιήσει streak freeze (βλ. StreakFreezeEntity) — ένα
+ * freeze "καλύπτει" τη μέρα σαν να είχε γίνει η συνήθεια, χωρίς να μετράει σαν πραγματική
+ * ολοκλήρωση πουθενά αλλού (badges/σύνολο).
  */
 object StreakCalculator {
 
-    fun calculate(logs: List<HabitLogEntity>, zoneId: ZoneId = ZoneId.systemDefault()): StreakResult {
-        if (logs.isEmpty()) return StreakResult(0, 0)
-
-        val days = logs
+    fun calculate(
+        logs: List<HabitLogEntity>,
+        frozenDates: Set<LocalDate> = emptySet(),
+        zoneId: ZoneId = ZoneId.systemDefault()
+    ): StreakResult {
+        val loggedDays = logs
             .map { Instant.ofEpochMilli(it.timestamp).atZone(zoneId).toLocalDate() }
-            .toSortedSet()
-            .toList()
+            .toSet()
+
+        val days = (loggedDays + frozenDates).toSortedSet().toList()
+        if (days.isEmpty()) return StreakResult(0, 0)
 
         var best = 1
         var run = 1
@@ -34,7 +38,6 @@ object StreakCalculator {
             if (run > best) best = run
         }
 
-        // current streak: walk backwards from today (or yesterday) while consecutive
         val today = LocalDate.now(zoneId)
         var current = 0
         var cursor = today
