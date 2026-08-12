@@ -131,8 +131,10 @@ fun HomeScreen(
                         strings = strings,
                         onTap = {
                             val vibrator = context.getSystemService(Vibrator::class.java)
-                            vibrator?.let {
-                                if (it.hasVibrator()) it.vibrate(VibrationEffect.createOneShot(35, VibrationEffect.DEFAULT_AMPLITUDE))
+                            runCatching {
+                                vibrator?.let {
+                                    if (it.hasVibrator()) it.vibrate(VibrationEffect.createOneShot(35, VibrationEffect.DEFAULT_AMPLITUDE))
+                                }
                             }
                             habitToQuickLog = state
                         },
