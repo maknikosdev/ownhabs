@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "HabitPulse"
+rootProject.name = "OwnHabs"
 include(":app")

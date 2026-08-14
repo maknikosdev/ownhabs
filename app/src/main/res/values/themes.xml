@@ -1,13 +1,13 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-    <style name="Theme.HabitPulse" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:statusBarColor">@color/habitpulse_dark</item>
+    <style name="Theme.OwnHabs" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@color/ownhabs_dark</item>
     </style>
 
-    <style name="Theme.HabitPulse.Splash" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/habitpulse_dark</item>
+    <style name="Theme.OwnHabs.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/ownhabs_dark</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_logo</item>
-        <item name="postSplashScreenTheme">@style/Theme.HabitPulse</item>
+        <item name="postSplashScreenTheme">@style/Theme.OwnHabs</item>
     </style>
 
 </resources>

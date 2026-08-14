@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.habitpulse.app"
+    namespace = "com.ownhabs.app"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.habitpulse.app"
+        applicationId = "com.ownhabs.app"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
