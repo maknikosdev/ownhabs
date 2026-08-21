@@ -19,6 +19,8 @@ class BootReceiver : BroadcastReceiver() {
             habits.filter { it.reminderHour != null }.forEach {
                 ReminderScheduler.schedule(context, it)
             }
+            // Τα alarms δεν επιβιώνουν το reboot· επαναπρογραμματίζουμε άμεσα τη μηνιαία σύνοψη.
+            MonthlyRecapScheduler.scheduleNext(context)
         }
     }
 }

@@ -1,0 +1,5 @@
+<resources>
+    <style name="Theme.OwnHabsWear" parent="android:Theme.DeviceDefault">
+        <item name="android:colorBackground">#070C15</item>
+    </style>
+</resources>

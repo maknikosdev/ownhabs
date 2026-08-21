@@ -15,3 +15,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "OwnHabs"
 include(":app")
+include(":wear")

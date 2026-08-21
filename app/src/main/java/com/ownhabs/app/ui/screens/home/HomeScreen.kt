@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -45,7 +46,8 @@ fun HomeScreen(
     onEditHabit: (String) -> Unit,
     onOpenHistory: (String) -> Unit,
     onOpenBadges: () -> Unit,
-    onOpenSettings: () -> Unit
+    onOpenSettings: () -> Unit,
+    onOpenYearRecap: () -> Unit
 ) {
     val strings = LocalStrings.current
     val context = LocalContext.current
@@ -100,6 +102,9 @@ fun HomeScreen(
             TopAppBar(
                 title = { Text(strings.appName, fontWeight = FontWeight.Bold) },
                 actions = {
+                    IconButton(onClick = onOpenYearRecap) {
+                        Icon(Icons.Default.AutoAwesome, contentDescription = "Year in Pixels")
+                    }
                     IconButton(onClick = onOpenBadges) {
                         Icon(Icons.Default.EmojiEvents, contentDescription = strings.navBadges)
                     }

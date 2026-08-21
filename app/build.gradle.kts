@@ -70,6 +70,9 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
+    // Wearable Data Layer API: συγχρονισμός με το OwnHabs Wear OS companion, μέσω Bluetooth — καμία σύνδεση internet.
+    implementation("com.google.android.gms:play-services-wearable:20.0.1")
+
     debugImplementation("androidx.compose.ui:ui-tooling")
 }
 

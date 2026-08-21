@@ -15,6 +15,7 @@ class OwnHabsApp : Application() {
         super.onCreate()
         container = AppContainer(this)
         createNotificationChannel()
+        com.ownhabs.app.notifications.MonthlyRecapScheduler.ensureScheduled(this)
     }
 
     private fun createNotificationChannel() {

@@ -13,6 +13,7 @@ import com.ownhabs.app.ui.screens.addedit.AddEditHabitScreen
 import com.ownhabs.app.ui.screens.badges.BadgesScreen
 import com.ownhabs.app.ui.screens.history.HistoryScreen
 import com.ownhabs.app.ui.screens.home.HomeScreen
+import com.ownhabs.app.ui.screens.recap.YearRecapScreen
 import com.ownhabs.app.ui.screens.settings.SettingsScreen
 import com.ownhabs.app.ui.screens.suggestions.CustomTemplateEditScreen
 import com.ownhabs.app.ui.screens.suggestions.SuggestedHabitsScreen
@@ -24,6 +25,7 @@ object Routes {
     const val HISTORY = "history/{habitId}"
     const val BADGES = "badges"
     const val SETTINGS = "settings"
+    const val YEAR_RECAP = "year_recap"
     const val TEMPLATE_EDIT = "template_edit/{categoryId}?templateId={templateId}"
 
     fun addEdit(habitId: String? = null, templateId: String? = null, customTemplateId: String? = null): String {
@@ -58,8 +60,13 @@ fun OwnHabsNavGraph(
                 onEditHabit = { id -> navController.navigate(Routes.addEdit(habitId = id)) },
                 onOpenHistory = { id -> navController.navigate(Routes.history(id)) },
                 onOpenBadges = { navController.navigate(Routes.BADGES) },
-                onOpenSettings = { navController.navigate(Routes.SETTINGS) }
+                onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                onOpenYearRecap = { navController.navigate(Routes.YEAR_RECAP) }
             )
+        }
+
+        composable(Routes.YEAR_RECAP) {
+            YearRecapScreen(repository = repository, onBack = { navController.popBackStack() })
         }
 
         composable(Routes.SUGGESTIONS) {

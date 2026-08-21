@@ -30,6 +30,7 @@ class HomeViewModel(private val repository: HabitRepository, private val appCont
         viewModelScope.launch {
             repository.observeActiveHabits().collect { habits ->
                 refresh(habits)
+                com.ownhabs.app.wear.WearSyncManager.pushTodayHabits(appContext, repository)
             }
         }
     }
@@ -62,6 +63,7 @@ class HomeViewModel(private val repository: HabitRepository, private val appCont
             val unlocked = repository.logHabit(habit, amount)
             refresh(_uiState.value.map { it.habit })
             com.ownhabs.app.widget.HabitWidgetProvider.requestUpdate(appContext)
+            com.ownhabs.app.wear.WearSyncManager.pushTodayHabits(appContext, repository)
             if (unlocked.isNotEmpty()) {
                 onBadgesUnlocked(unlocked.map { it.title })
             }
@@ -74,6 +76,7 @@ class HomeViewModel(private val repository: HabitRepository, private val appCont
             val unlocked = repository.setTodayValue(habit, value)
             refresh(_uiState.value.map { it.habit })
             com.ownhabs.app.widget.HabitWidgetProvider.requestUpdate(appContext)
+            com.ownhabs.app.wear.WearSyncManager.pushTodayHabits(appContext, repository)
             if (unlocked.isNotEmpty()) {
                 onBadgesUnlocked(unlocked.map { it.title })
             }
@@ -85,6 +88,7 @@ class HomeViewModel(private val repository: HabitRepository, private val appCont
         viewModelScope.launch {
             repository.archiveHabit(habit.id)
             com.ownhabs.app.widget.HabitWidgetProvider.requestUpdate(appContext)
+            com.ownhabs.app.wear.WearSyncManager.pushTodayHabits(appContext, repository)
         }
     }
 
@@ -93,6 +97,7 @@ class HomeViewModel(private val repository: HabitRepository, private val appCont
         viewModelScope.launch {
             repository.deleteHabitPermanently(habit.id)
             com.ownhabs.app.widget.HabitWidgetProvider.requestUpdate(appContext)
+            com.ownhabs.app.wear.WearSyncManager.pushTodayHabits(appContext, repository)
         }
     }
 }
