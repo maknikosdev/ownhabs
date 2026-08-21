@@ -8,8 +8,6 @@ premium, και να στέλνουν τα δεδομένα μου ο θεός �
 από αυτά. Καμία εγγραφή, κανένα cloud, καμία διαφήμιση. Ό,τι καταγράφεις μένει στο κινητό
 σου, τελεία.
 
-Δεν είναι έτοιμο για το Play Store ακόμα — είναι project σε εξέλιξη που δουλεύω στον
-ελεύθερο χρόνο μου.
 
 ---
 
@@ -46,7 +44,7 @@ an account, nagging me to go premium, and shipping my data who-knows-where. OwnH
 doesn't do any of that. No sign-up, no cloud, no ads. What you track stays on your phone,
 period.
 
-Not on the Play Store yet — it's a work-in-progress side project.
+
 
 ## What it does
 
@@ -72,4 +70,4 @@ Not on the Play Store yet — it's a work-in-progress side project.
 
 ---
 
-📄 License: MIT
+
