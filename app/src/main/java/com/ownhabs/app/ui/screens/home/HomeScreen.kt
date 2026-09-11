@@ -92,7 +92,7 @@ fun HomeScreen(
             confirmButton = {
                 TextButton(onClick = { celebrationBadges = emptyList() }) { Text("🎉") }
             },
-            title = { Text("🎉 Badge!") },
+            title = { Text(if (com.ownhabs.app.ui.strings.LocalLang.current == com.ownhabs.app.ui.strings.Lang.EL) "🎉 Νέο Badge!" else "🎉 New Badge!") },
             text = { Text(celebrationBadges.joinToString(", ")) }
         )
     }

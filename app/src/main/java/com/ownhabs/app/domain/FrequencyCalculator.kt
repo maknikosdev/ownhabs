@@ -70,14 +70,27 @@ object FrequencyCalculator {
         )
     }
 
-    /** Ανθρώπινη περιγραφή της συχνότητας, π.χ. "2 φορές / εβδομάδα". */
-    fun describe(habit: HabitEntity): String {
+    /** Ανθρώπινη περιγραφή της συχνότητας, π.χ. "2 φορές / εβδομάδα" ή "2 times / week". */
+    fun describe(habit: HabitEntity, lang: com.ownhabs.app.ui.strings.Lang = com.ownhabs.app.ui.strings.Lang.EL): String {
         val times = habit.timesPerPeriod
-        val timesLabel = if (times == 1) "1 φορά" else "$times φορές"
-        val periodLabel = when (habit.frequencyPeriod) {
-            FrequencyPeriod.DAILY -> if (times <= 1) "την ημέρα" else "την ημέρα"
-            FrequencyPeriod.WEEKLY -> "την εβδομάδα"
-            FrequencyPeriod.MONTHLY -> "τον μήνα"
+        val isEl = lang == com.ownhabs.app.ui.strings.Lang.EL
+        val timesLabel = if (isEl) {
+            if (times == 1) "1 φορά" else "$times φορές"
+        } else {
+            if (times == 1) "1 time" else "$times times"
+        }
+        val periodLabel = if (isEl) {
+            when (habit.frequencyPeriod) {
+                FrequencyPeriod.DAILY -> "την ημέρα"
+                FrequencyPeriod.WEEKLY -> "την εβδομάδα"
+                FrequencyPeriod.MONTHLY -> "τον μήνα"
+            }
+        } else {
+            when (habit.frequencyPeriod) {
+                FrequencyPeriod.DAILY -> "day"
+                FrequencyPeriod.WEEKLY -> "week"
+                FrequencyPeriod.MONTHLY -> "month"
+            }
         }
         return "$timesLabel / $periodLabel"
     }

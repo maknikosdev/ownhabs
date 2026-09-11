@@ -19,6 +19,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ownhabs.app.data.repository.HabitRepository
 import com.ownhabs.app.ui.navigation.SimpleViewModelFactory
 import com.ownhabs.app.ui.strings.LocalStrings
+import com.ownhabs.app.ui.strings.LocalLang
+import com.ownhabs.app.ui.strings.BadgeStrings
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -27,6 +29,7 @@ import java.util.Locale
 @Composable
 fun BadgesScreen(repository: HabitRepository, onBack: () -> Unit) {
     val strings = LocalStrings.current
+    val lang = LocalLang.current
     val viewModel: BadgesViewModel = viewModel(factory = SimpleViewModelFactory { BadgesViewModel(repository) })
     val items by viewModel.items.collectAsState()
     val dateFormat = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
@@ -66,7 +69,7 @@ fun BadgesScreen(repository: HabitRepository, onBack: () -> Unit) {
                                 fontWeight = FontWeight.SemiBold,
                                 color = if (unlocked) MaterialTheme.colorScheme.onSurface else Color.Gray
                             )
-                            Text(item.badge.description, style = MaterialTheme.typography.bodyMedium)
+                            Text(BadgeStrings.description(item.badge.id, lang), style = MaterialTheme.typography.bodyMedium)
                             if (unlocked) {
                                 item.unlockedFor.forEach { (habit, ts) ->
                                     Text(

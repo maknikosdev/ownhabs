@@ -6,7 +6,7 @@
 
     <style name="Theme.OwnHabs.Splash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/ownhabs_dark</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_logo</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
         <item name="postSplashScreenTheme">@style/Theme.OwnHabs</item>
     </style>
 

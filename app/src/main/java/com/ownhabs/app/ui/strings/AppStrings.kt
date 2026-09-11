@@ -138,7 +138,22 @@ data class AppStrings(
     // Add/Edit επιπλέον
     val addEditDeleteConfirmTitle: String,
     val addEditDeleteConfirmText: String,
-    val addEditDeleteButton: String
+    val addEditDeleteButton: String,
+
+    // Year in Pixels / Recap
+    val recapTitle: String,
+    val recapShare: String,
+    val recapAvgConsistency: (Int) -> String,
+    val recapBestStreak: String,
+    val recapCompletions: String,
+    val recapBadges: String,
+    val recapMostConsistent: (String, Int) -> String,
+    val recapDetailsHeader: String,
+    val recapActiveHabits: String,
+    val recapTotalLogs: String,
+    val recapBestStreakDetail: (Int, String) -> String,
+    val recapBadgesUnlocked: String,
+    val recapNoData: String
 )
 
 val ElStrings = AppStrings(
@@ -260,7 +275,21 @@ val ElStrings = AppStrings(
 
     addEditDeleteConfirmTitle = "Μόνιμη διαγραφή;",
     addEditDeleteConfirmText = "Θα διαγραφούν η συνήθεια και όλο το ιστορικό καταγραφών της. Η ενέργεια δεν αναιρείται.",
-    addEditDeleteButton = "Διαγραφή"
+    addEditDeleteButton = "Διαγραφή",
+
+    recapTitle = "Το Έτος σου σε Pixels",
+    recapShare = "Κοινοποίηση",
+    recapAvgConsistency = { pct -> "$pct% μέση συνέπεια" },
+    recapBestStreak = "καλύτερο σερί",
+    recapCompletions = "καταγραφές",
+    recapBadges = "badges",
+    recapMostConsistent = { title, pct -> "Πιο συνεπής συνήθεια: $title ($pct%)" },
+    recapDetailsHeader = "Λεπτομέρειες",
+    recapActiveHabits = "Ενεργές συνήθειες",
+    recapTotalLogs = "Σύνολο καταγραφών",
+    recapBestStreakDetail = { days, title -> "$days ημέρες («$title»)" },
+    recapBadgesUnlocked = "Badges που ξεκλειδώθηκαν",
+    recapNoData = "—"
 )
 
 val EnStrings = AppStrings(
@@ -382,7 +411,21 @@ val EnStrings = AppStrings(
 
     addEditDeleteConfirmTitle = "Delete permanently?",
     addEditDeleteConfirmText = "The habit and all of its log history will be deleted. This can't be undone.",
-    addEditDeleteButton = "Delete"
+    addEditDeleteButton = "Delete",
+
+    recapTitle = "Your Year in Pixels",
+    recapShare = "Share",
+    recapAvgConsistency = { pct -> "$pct% average consistency" },
+    recapBestStreak = "best streak",
+    recapCompletions = "logs",
+    recapBadges = "badges",
+    recapMostConsistent = { title, pct -> "Most consistent habit: $title ($pct%)" },
+    recapDetailsHeader = "Details",
+    recapActiveHabits = "Active habits",
+    recapTotalLogs = "Total logs",
+    recapBestStreakDetail = { days, title -> "$days days (\"$title\")" },
+    recapBadgesUnlocked = "Badges unlocked",
+    recapNoData = "—"
 )
 
 fun stringsFor(lang: Lang): AppStrings = when (lang) { Lang.EL -> ElStrings; Lang.EN -> EnStrings }

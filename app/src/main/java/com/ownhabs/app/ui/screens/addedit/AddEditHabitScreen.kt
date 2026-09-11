@@ -219,7 +219,8 @@ fun AddEditHabitScreen(
                     text = com.ownhabs.app.domain.FrequencyCalculator.describe(
                         com.ownhabs.app.data.local.entity.HabitEntity(
                             title = "", frequencyPeriod = state.frequencyPeriod, timesPerPeriod = state.timesPerPeriod
-                        )
+                        ),
+                        lang
                     ),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary

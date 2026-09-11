@@ -22,6 +22,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ownhabs.app.data.repository.HabitRepository
 import com.ownhabs.app.domain.RecapData
 import com.ownhabs.app.ui.navigation.SimpleViewModelFactory
+import com.ownhabs.app.ui.strings.AppStrings
+import com.ownhabs.app.ui.strings.LocalStrings
 import com.ownhabs.app.ui.util.shareRecapImage
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -35,6 +37,7 @@ fun YearRecapScreen(
     year: Int = LocalDate.now().year,
     onBack: () -> Unit
 ) {
+    val strings = LocalStrings.current
     val viewModel: YearRecapViewModel = viewModel(
         factory = SimpleViewModelFactory { YearRecapViewModel(repository, year) }
     )
@@ -46,9 +49,9 @@ fun YearRecapScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Το Έτος σου σε Pixels") },
+                title = { Text(strings.recapTitle) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Πίσω") }
+                    IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = strings.back) }
                 },
                 actions = {
                     if (data != null) {
@@ -58,7 +61,7 @@ fun YearRecapScreen(
                                 shareRecapImage(context, bitmap, "ownhabs_recap_$year.png")
                             }
                         }) {
-                            Icon(Icons.Default.Share, contentDescription = "Κοινοποίηση")
+                            Icon(Icons.Default.Share, contentDescription = strings.recapShare)
                         }
                     }
                 }
@@ -86,16 +89,16 @@ fun YearRecapScreen(
                         drawLayer(graphicsLayer)
                     }
             ) {
-                RecapShareCard(year = year, recap = current)
+                RecapShareCard(year = year, recap = current, strings = strings)
             }
 
-            RecapStatsList(recap = current)
+            RecapStatsList(recap = current, strings = strings)
         }
     }
 }
 
 @Composable
-private fun RecapShareCard(year: Int, recap: RecapData) {
+private fun RecapShareCard(year: Int, recap: RecapData, strings: AppStrings) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -106,7 +109,7 @@ private fun RecapShareCard(year: Int, recap: RecapData) {
     ) {
         Text("OwnHabs · $year", color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
         Text(
-            "${(recap.completionRate * 100).toInt()}% μέση συνέπεια",
+            strings.recapAvgConsistency((recap.completionRate * 100).toInt()),
             color = Color(0xFF6ED15A),
             fontWeight = FontWeight.SemiBold,
             style = MaterialTheme.typography.titleMedium
@@ -115,14 +118,14 @@ private fun RecapShareCard(year: Int, recap: RecapData) {
         YearPixelGrid(dailyRatio = recap.dailyRatio, year = year)
 
         Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-            MiniStat("🔥 ${recap.bestStreak}", "καλύτερο σερί")
-            MiniStat("✅ ${recap.totalCompletions}", "καταγραφές")
-            MiniStat("🏆 ${recap.badgesUnlockedCount}", "badges")
+            MiniStat("🔥 ${recap.bestStreak}", strings.recapBestStreak)
+            MiniStat("✅ ${recap.totalCompletions}", strings.recapCompletions)
+            MiniStat("🏆 ${recap.badgesUnlockedCount}", strings.recapBadges)
         }
 
         if (recap.mostConsistentHabitTitle != null) {
             Text(
-                "Πιο συνεπής συνήθεια: ${recap.mostConsistentHabitTitle} (${(recap.mostConsistentHabitRate * 100).toInt()}%)",
+                strings.recapMostConsistent(recap.mostConsistentHabitTitle, (recap.mostConsistentHabitRate * 100).toInt()),
                 color = Color(0xFF8A93A6),
                 style = MaterialTheme.typography.bodySmall
             )
@@ -170,13 +173,16 @@ private fun YearPixelGrid(dailyRatio: Map<LocalDate, Float>, year: Int) {
 }
 
 @Composable
-private fun RecapStatsList(recap: RecapData) {
+private fun RecapStatsList(recap: RecapData, strings: AppStrings) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text("Λεπτομέρειες", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-        StatRow("Ενεργές συνήθειες", "${recap.activeHabitsCount}")
-        StatRow("Σύνολο καταγραφών", "${recap.totalCompletions}")
-        StatRow("Καλύτερο σερί", if (recap.bestStreakHabitTitle != null) "${recap.bestStreak} ημέρες («${recap.bestStreakHabitTitle}»)" else "—")
-        StatRow("Badges που ξεκλειδώθηκαν", "${recap.badgesUnlockedCount}")
+        Text(strings.recapDetailsHeader, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        StatRow(strings.recapActiveHabits, "${recap.activeHabitsCount}")
+        StatRow(strings.recapTotalLogs, "${recap.totalCompletions}")
+        StatRow(
+            strings.recapBestStreak.replaceFirstChar { it.uppercase() },
+            if (recap.bestStreakHabitTitle != null) strings.recapBestStreakDetail(recap.bestStreak, recap.bestStreakHabitTitle) else strings.recapNoData
+        )
+        StatRow(strings.recapBadgesUnlocked, "${recap.badgesUnlockedCount}")
     }
 }
 

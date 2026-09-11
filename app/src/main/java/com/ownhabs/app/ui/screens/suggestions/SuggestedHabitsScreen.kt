@@ -151,6 +151,7 @@ fun SuggestedHabitsScreen(
                         CustomTemplateRow(
                             template = template,
                             strings = strings,
+                            lang = lang,
                             menuOpen = openMenuForTemplate == template.id,
                             onClick = { onPickCustomTemplate(template) },
                             onToggleMenu = { openMenuForTemplate = if (openMenuForTemplate == template.id) null else template.id },
@@ -227,6 +228,7 @@ private fun CategoryHeaderRow(
 private fun CustomTemplateRow(
     template: CustomTemplateEntity,
     strings: AppStrings,
+    lang: com.ownhabs.app.ui.strings.Lang,
     menuOpen: Boolean,
     onClick: () -> Unit,
     onToggleMenu: () -> Unit,
@@ -254,7 +256,8 @@ private fun CustomTemplateRow(
                         append(FrequencyCalculator.describe(
                             com.ownhabs.app.data.local.entity.HabitEntity(
                                 title = "", frequencyPeriod = template.frequencyPeriod, timesPerPeriod = template.timesPerPeriod
-                            )
+                            ),
+                            lang
                         ))
                     },
                     style = MaterialTheme.typography.bodySmall
@@ -293,7 +296,8 @@ private fun BuiltInTemplateRow(template: HabitTemplate, lang: com.ownhabs.app.ui
                         append(" · " + FrequencyCalculator.describe(
                             com.ownhabs.app.data.local.entity.HabitEntity(
                                 title = "", frequencyPeriod = template.frequencyPeriod, timesPerPeriod = template.timesPerPeriod
-                            )
+                            ),
+                            lang
                         ))
                     },
                     style = MaterialTheme.typography.bodySmall

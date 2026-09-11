@@ -22,6 +22,7 @@ import com.ownhabs.app.data.repository.CustomCategoryRepository
 import com.ownhabs.app.domain.FrequencyCalculator
 import com.ownhabs.app.ui.navigation.SimpleViewModelFactory
 import com.ownhabs.app.ui.strings.LocalStrings
+import com.ownhabs.app.ui.strings.LocalLang
 
 private val ICONS = listOf("✅", "💧", "📖", "🏃", "🧘", "🥗", "😴", "💊", "✍️", "🎯", "🚭", "💰", "🐾", "🧹", "📞", "🌱")
 private val COLORS = listOf("#2FB6C0", "#9ED037", "#F2B705", "#E85D5D", "#8E7CC3", "#3B82F6")
@@ -35,6 +36,7 @@ fun CustomTemplateEditScreen(
     onDone: () -> Unit
 ) {
     val strings = LocalStrings.current
+    val lang = LocalLang.current
     val viewModel: CustomTemplateEditViewModel = viewModel(
         factory = SimpleViewModelFactory { CustomTemplateEditViewModel(repository, categoryId, templateId) }
     )
@@ -200,7 +202,8 @@ fun CustomTemplateEditScreen(
                 FrequencyCalculator.describe(
                     com.ownhabs.app.data.local.entity.HabitEntity(
                         title = "", frequencyPeriod = state.frequencyPeriod, timesPerPeriod = state.timesPerPeriod
-                    )
+                    ),
+                    lang
                 ),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary
