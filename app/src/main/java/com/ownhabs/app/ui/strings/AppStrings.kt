@@ -153,7 +153,17 @@ data class AppStrings(
     val recapTotalLogs: String,
     val recapBestStreakDetail: (Int, String) -> String,
     val recapBadgesUnlocked: String,
-    val recapNoData: String
+    val recapNoData: String,
+
+    // Έξυπνη υπενθύμιση
+    val reminderBooleanText: (String) -> String,
+    val reminderNumericText: (String, Int, Int, String) -> String,
+
+    // Ρυθμίσεις — εξαίρεση βελτιστοποίησης μπαταρίας
+    val settingsBatteryTitle: String,
+    val settingsBatteryDesc: String,
+    val settingsBatteryButton: String,
+    val settingsBatteryAlreadyOk: String
 )
 
 val ElStrings = AppStrings(
@@ -289,7 +299,15 @@ val ElStrings = AppStrings(
     recapTotalLogs = "Σύνολο καταγραφών",
     recapBestStreakDetail = { days, title -> "$days ημέρες («$title»)" },
     recapBadgesUnlocked = "Badges που ξεκλειδώθηκαν",
-    recapNoData = "—"
+    recapNoData = "—",
+
+    reminderBooleanText = { title -> "Ώρα για: $title" },
+    reminderNumericText = { title, done, target, unit -> "$title: $done/$target $unit — έλα να το ολοκληρώσεις" },
+
+    settingsBatteryTitle = "Αξιοπιστία Ειδοποιήσεων",
+    settingsBatteryDesc = "Ορισμένες συσκευές (ειδικά Xiaomi, Huawei, Samsung) περιορίζουν εφαρμογές στο παρασκήνιο για εξοικονόμηση μπαταρίας, με αποτέλεσμα να χάνονται υπενθυμίσεις. Εξαίρεσε το OwnHabs από τη βελτιστοποίηση μπαταρίας για να το αποφύγεις.",
+    settingsBatteryButton = "Άνοιγμα Ρυθμίσεων Μπαταρίας",
+    settingsBatteryAlreadyOk = "✓ Η εφαρμογή είναι ήδη εξαιρεμένη"
 )
 
 val EnStrings = AppStrings(
@@ -425,7 +443,15 @@ val EnStrings = AppStrings(
     recapTotalLogs = "Total logs",
     recapBestStreakDetail = { days, title -> "$days days (\"$title\")" },
     recapBadgesUnlocked = "Badges unlocked",
-    recapNoData = "—"
+    recapNoData = "—",
+
+    reminderBooleanText = { title -> "Time for: $title" },
+    reminderNumericText = { title, done, target, unit -> "$title: $done/$target $unit — come finish it off" },
+
+    settingsBatteryTitle = "Notification Reliability",
+    settingsBatteryDesc = "Some devices (especially Xiaomi, Huawei, Samsung) restrict background apps to save battery, which can cause reminders to be missed. Exempt OwnHabs from battery optimization to avoid this.",
+    settingsBatteryButton = "Open Battery Settings",
+    settingsBatteryAlreadyOk = "✓ App is already exempted"
 )
 
 fun stringsFor(lang: Lang): AppStrings = when (lang) { Lang.EL -> ElStrings; Lang.EN -> EnStrings }

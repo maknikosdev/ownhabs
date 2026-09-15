@@ -1,6 +1,9 @@
 package com.ownhabs.app.ui.screens.settings
 
+import android.content.Intent
 import android.net.Uri
+import android.os.PowerManager
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -10,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.ownhabs.app.data.backup.BackupManager
 import com.ownhabs.app.data.backup.ImportMode
@@ -31,10 +35,30 @@ fun SettingsScreen(
 ) {
     val strings = LocalStrings.current
     val currentLang = LocalLang.current
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var statusMessage by remember { mutableStateOf<String?>(null) }
     var pendingImportUri by remember { mutableStateOf<Uri?>(null) }
     var showImportModeDialog by remember { mutableStateOf(false) }
+
+    // Ξαναελέγχει κάθε φορά που η οθόνη ξαναγίνεται ορατή (π.χ. επιστροφή από τις ρυθμίσεις συστήματος).
+    var isBatteryExempted by remember {
+        mutableStateOf(
+            (context.getSystemService(android.content.Context.POWER_SERVICE) as PowerManager)
+                .isIgnoringBatteryOptimizations(context.packageName)
+        )
+    }
+    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                isBatteryExempted = (context.getSystemService(android.content.Context.POWER_SERVICE) as PowerManager)
+                    .isIgnoringBatteryOptimizations(context.packageName)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     val exportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
@@ -109,6 +133,20 @@ fun SettingsScreen(
 
             Card {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(strings.settingsBatteryTitle, style = MaterialTheme.typography.titleMedium)
+                    Text(strings.settingsBatteryDesc, style = MaterialTheme.typography.bodyMedium)
+                    if (isBatteryExempted) {
+                        Text(strings.settingsBatteryAlreadyOk, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+                    } else {
+                        Button(onClick = { openBatteryOptimizationSettings(context) }) {
+                            Text(strings.settingsBatteryButton)
+                        }
+                    }
+                }
+            }
+
+            Card {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(strings.settingsLanguageTitle, style = MaterialTheme.typography.titleMedium)
                     Text(strings.settingsLanguageDesc, style = MaterialTheme.typography.bodyMedium)
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -153,6 +191,29 @@ fun SettingsScreen(
                 }
             }
         }
+    }
+}
+
+private fun openBatteryOptimizationSettings(context: android.content.Context) {
+    // Προτίμηση: απευθείας διάλογος εξαίρεσης για ΑΥΤΗ την εφαρμογή.
+    runCatching {
+        val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+            data = Uri.parse("package:${context.packageName}")
+        }
+        context.startActivity(intent)
+        return
+    }
+    // Fallback 1: γενική λίστα εξαιρέσεων μπαταρίας (αν κάποιο OEM μπλοκάρει το άμεσο intent).
+    runCatching {
+        context.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+        return
+    }
+    // Fallback 2: σελίδα λεπτομερειών της ίδιας της εφαρμογής.
+    runCatching {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.parse("package:${context.packageName}")
+        }
+        context.startActivity(intent)
     }
 }
 
