@@ -27,5 +27,9 @@ data class HabitEntity(
     val reminderHour: Int? = null,
     val reminderMinute: Int? = null,
     val status: HabitStatus = HabitStatus.ACTIVE,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    // Μόνο για GoalType.NUMERIC: αν true, η σημερινή τιμή ενημερώνεται αυτόματα από τα
+    // βήματα του συζευγμένου smartwatch (μέσω WearSyncManager/PhoneWearListenerService),
+    // και η συνήθεια "κλείνει" μόνη της μόλις τα βήματα φτάσουν το targetValue.
+    val autoTrackSteps: Boolean = false
 )

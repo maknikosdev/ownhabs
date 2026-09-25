@@ -170,6 +170,29 @@ fun AddEditHabitScreen(
                         modifier = Modifier.weight(1f)
                     )
                 }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .selectable(
+                            selected = state.autoTrackSteps,
+                            onClick = { viewModel.update { it.copy(autoTrackSteps = !it.autoTrackSteps) } }
+                        ),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(strings.addEditAutoTrackSteps, style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            strings.addEditAutoTrackStepsDesc,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = state.autoTrackSteps,
+                        onCheckedChange = { v -> viewModel.update { it.copy(autoTrackSteps = v) } }
+                    )
+                }
             }
 
             Text(strings.addEditFrequency, style = MaterialTheme.typography.titleMedium)

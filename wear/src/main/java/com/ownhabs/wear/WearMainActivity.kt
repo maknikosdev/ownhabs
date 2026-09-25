@@ -1,8 +1,11 @@
 package com.ownhabs.wear
 
+import android.Manifest
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -14,6 +17,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
@@ -21,6 +25,7 @@ import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
+import com.ownhabs.wear.health.StepsSetup
 
 class WearMainActivity : ComponentActivity() {
 
@@ -30,8 +35,35 @@ class WearMainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
+                RequestActivityRecognitionOnce()
                 WearHomeScreen(viewModel)
             }
+        }
+    }
+}
+
+/**
+ * Το ACTIVITY_RECOGNITION είναι η άδεια που χρειάζεται το Health Services για να μοιραστεί
+ * δεδομένα βημάτων (DataType.STEPS_DAILY). Μόλις δοθεί, καταχωρούμε το background listener
+ * που στέλνει τα βήματα στο τηλέφωνο· χωρίς αυτήν, η εφαρμογή συνεχίζει κανονικά — απλά
+ * χωρίς τη λειτουργία βημάτων.
+ */
+@Composable
+private fun RequestActivityRecognitionOnce() {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted -> if (granted) StepsSetup.registerPassiveListener(context) }
+
+    LaunchedEffect(Unit) {
+        val granted = ContextCompat.checkSelfPermission(
+            context, Manifest.permission.ACTIVITY_RECOGNITION
+        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+
+        if (granted) {
+            StepsSetup.registerPassiveListener(context)
+        } else {
+            launcher.launch(Manifest.permission.ACTIVITY_RECOGNITION)
         }
     }
 }

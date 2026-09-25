@@ -17,7 +17,9 @@ data class BackupHabit(
     val reminderHour: Int?,
     val reminderMinute: Int?,
     val status: String,
-    val createdAt: Long
+    val createdAt: Long,
+    // Default false: παλιά backups (πριν την υποστήριξη βημάτων ρολογιού) εξακολουθούν να εισάγονται κανονικά.
+    val autoTrackSteps: Boolean = false
 )
 
 @Serializable

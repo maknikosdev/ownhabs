@@ -28,7 +28,8 @@ data class AddEditFormState(
     val reminderHour: Int? = null,
     val reminderMinute: Int? = null,
     val isLoading: Boolean = true,
-    val isSaved: Boolean = false
+    val isSaved: Boolean = false,
+    val autoTrackSteps: Boolean = false
 )
 
 class AddEditHabitViewModel(
@@ -60,7 +61,8 @@ class AddEditHabitViewModel(
                         timesPerPeriod = habit.timesPerPeriod,
                         reminderHour = habit.reminderHour,
                         reminderMinute = habit.reminderMinute,
-                        isLoading = false
+                        isLoading = false,
+                        autoTrackSteps = habit.autoTrackSteps
                     )
                 } ?: run { _state.value = _state.value.copy(isLoading = false) }
             }
@@ -124,7 +126,8 @@ class AddEditHabitViewModel(
                 timesPerPeriod = s.timesPerPeriod.coerceIn(1, maxTimesFor(s.frequencyPeriod)),
                 reminderHour = s.reminderHour,
                 reminderMinute = s.reminderMinute,
-                status = HabitStatus.ACTIVE
+                status = HabitStatus.ACTIVE,
+                autoTrackSteps = s.goalType == GoalType.NUMERIC && s.autoTrackSteps
             )
             repository.saveHabit(habit)
             _state.value = _state.value.copy(isSaved = true)

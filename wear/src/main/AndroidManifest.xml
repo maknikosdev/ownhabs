@@ -3,6 +3,9 @@
 
     <uses-feature android:name="android.hardware.type.watch" />
 
+    <!-- Απαιτείται από το Health Services για την ανάγνωση βημάτων (DataType.STEPS_DAILY). -->
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -39,6 +42,15 @@
                     android:pathPrefix="/ownhabs/today_habits" />
             </intent-filter>
         </service>
+
+        <!-- Το Health Services API τρέχει αυτή την υπηρεσία στο παρασκήνιο κάθε φορά που
+             έχει νέο σωρευτικό σύνολο βημάτων ημέρας να αναφέρει — ακόμα κι όταν η
+             εφαρμογή δεν είναι ανοιχτή. Η άδεια PASSIVE_DATA_BINDING διασφαλίζει ότι μόνο
+             το ίδιο το Health Services μπορεί να συνδεθεί σε αυτήν. -->
+        <service
+            android:name=".health.StepsPassiveService"
+            android:permission="com.google.android.wearable.healthservices.permission.PASSIVE_DATA_BINDING"
+            android:exported="true" />
 
     </application>
 

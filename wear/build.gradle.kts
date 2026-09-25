@@ -51,6 +51,10 @@ dependencies {
     // Wearable Data Layer API: συγχρονισμός τηλέφωνο <-> ρολόι μέσω Bluetooth, καμία σύνδεση internet/cloud.
     implementation("com.google.android.gms:play-services-wearable:20.0.1")
 
+    // Health Services: διάβασμα σωρευτικού συνόλου βημάτων ημέρας (DataType.STEPS_DAILY)
+    // απευθείας από τους αισθητήρες του ρολογιού, στο παρασκήνιο.
+    implementation("androidx.health:health-services-client:1.0.0")
+
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
 

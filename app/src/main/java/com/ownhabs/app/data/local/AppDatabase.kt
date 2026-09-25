@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
         HabitEntity::class, HabitLogEntity::class, BadgeEntity::class, UnlockedBadgeEntity::class,
         CategoryEntity::class, CustomTemplateEntity::class, StreakFreezeEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

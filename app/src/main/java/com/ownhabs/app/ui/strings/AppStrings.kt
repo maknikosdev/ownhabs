@@ -38,6 +38,10 @@ data class AppStrings(
     val homeTimesThisWeek: String,
     val homeTimesThisMonth: String,
     val homeTimesToday: String,
+    val homeStepsCardTitle: String,
+    val homeStepsCount: (Int) -> String,
+    val homeStepsUpdatedJustNow: String,
+    val homeStepsUpdatedMinutesAgo: (Int) -> String,
 
     // Ρυθμίσεις
     val settingsTitle: String,
@@ -99,6 +103,8 @@ data class AppStrings(
     val addEditCreateButton: String,
     val addEditSaveButton: String,
     val addEditArchiveButton: String,
+    val addEditAutoTrackSteps: String,
+    val addEditAutoTrackStepsDesc: String,
 
     // Suggestions
     val suggestionsTitle: String,
@@ -193,6 +199,10 @@ val ElStrings = AppStrings(
     homeTimesThisWeek = "φορές αυτή την εβδομάδα",
     homeTimesThisMonth = "φορές αυτόν τον μήνα",
     homeTimesToday = "σήμερα",
+    homeStepsCardTitle = "Βήματα από το ρολόι",
+    homeStepsCount = { steps -> "$steps βήματα σήμερα" },
+    homeStepsUpdatedJustNow = "μόλις τώρα",
+    homeStepsUpdatedMinutesAgo = { mins -> "πριν $mins′" },
 
     settingsTitle = "Ρυθμίσεις & Backup",
     settingsPrivacyBanner = "🔒 Η εφαρμογή είναι 100% τοπική. Δεν υπάρχει backend ή cloud server — όλα τα δεδομένα σου μένουν στη συσκευή σου.",
@@ -250,6 +260,8 @@ val ElStrings = AppStrings(
     addEditCreateButton = "Δημιουργία Συνήθειας",
     addEditSaveButton = "Αποθήκευση Αλλαγών",
     addEditArchiveButton = "Αρχειοθέτηση",
+    addEditAutoTrackSteps = "Αυτόματο κλείσιμο από βήματα ρολογιού",
+    addEditAutoTrackStepsDesc = "Όταν το συζευγμένο smartwatch αναφέρει ότι έφτασες τον στόχο σήμερα, η συνήθεια σημειώνεται αυτόματα ως ολοκληρωμένη. Χρήσιμο για συνήθειες βημάτων.",
 
     suggestionsTitle = "Νέα Συνήθεια",
     suggestionsIntro = "Διάλεξε μια έτοιμη πρόταση για γρήγορη έναρξη, ή φτιάξε τη δική σου συνήθεια από το μηδέν.",
@@ -337,6 +349,10 @@ val EnStrings = AppStrings(
     homeTimesThisWeek = "times this week",
     homeTimesThisMonth = "times this month",
     homeTimesToday = "today",
+    homeStepsCardTitle = "Steps from your watch",
+    homeStepsCount = { steps -> "$steps steps today" },
+    homeStepsUpdatedJustNow = "just now",
+    homeStepsUpdatedMinutesAgo = { mins -> "$mins′ ago" },
 
     settingsTitle = "Settings & Backup",
     settingsPrivacyBanner = "🔒 This app is 100% local. There's no backend or cloud server — all your data stays on your device.",
@@ -394,6 +410,8 @@ val EnStrings = AppStrings(
     addEditCreateButton = "Create Habit",
     addEditSaveButton = "Save Changes",
     addEditArchiveButton = "Archive",
+    addEditAutoTrackSteps = "Auto-complete from watch steps",
+    addEditAutoTrackStepsDesc = "When your paired smartwatch reports you've hit today's goal, this habit marks itself done automatically. Useful for step-count habits.",
 
     suggestionsTitle = "New Habit",
     suggestionsIntro = "Pick a ready-made suggestion for a quick start, or build your own habit from scratch.",

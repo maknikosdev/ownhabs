@@ -35,7 +35,7 @@ class BackupManager(
                     colorHex = it.colorHex, goalType = it.goalType.name, targetValue = it.targetValue,
                     unit = it.unit, frequencyPeriod = it.frequencyPeriod.name, timesPerPeriod = it.timesPerPeriod,
                     reminderHour = it.reminderHour, reminderMinute = it.reminderMinute,
-                    status = it.status.name, createdAt = it.createdAt
+                    status = it.status.name, createdAt = it.createdAt, autoTrackSteps = it.autoTrackSteps
                 )
             },
             habitLogs = repository.getAllLogsOnce().map {
@@ -80,7 +80,7 @@ class BackupManager(
                 colorHex = it.colorHex, goalType = GoalType.valueOf(it.goalType), targetValue = it.targetValue,
                 unit = it.unit, frequencyPeriod = FrequencyPeriod.valueOf(it.frequencyPeriod), timesPerPeriod = it.timesPerPeriod,
                 reminderHour = it.reminderHour, reminderMinute = it.reminderMinute,
-                status = HabitStatus.valueOf(it.status), createdAt = it.createdAt
+                status = HabitStatus.valueOf(it.status), createdAt = it.createdAt, autoTrackSteps = it.autoTrackSteps
             )
         }
         val logs = backup.habitLogs.map { HabitLogEntity(it.id, it.habitId, it.timestamp, it.value, it.notes) }

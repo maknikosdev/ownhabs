@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.DirectionsWalk
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -37,6 +38,7 @@ import com.ownhabs.app.ui.navigation.SimpleViewModelFactory
 import com.ownhabs.app.ui.strings.AppStrings
 import com.ownhabs.app.ui.strings.LocalStrings
 import com.ownhabs.app.ui.components.QuickLogDialog
+import com.ownhabs.app.wear.WearStepsStore
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,6 +55,9 @@ fun HomeScreen(
     val context = LocalContext.current
     val viewModel: HomeViewModel = viewModel(factory = SimpleViewModelFactory { HomeViewModel(repository, context.applicationContext) })
     val habits by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(Unit) { WearStepsStore.init(context.applicationContext) }
+    val stepsState by WearStepsStore.state.collectAsState()
 
     var celebrationBadges by remember { mutableStateOf<List<String>>(emptyList()) }
     var habitToDelete by remember { mutableStateOf<HabitEntity?>(null) }
@@ -120,7 +125,7 @@ fun HomeScreen(
             }
         }
     ) { padding ->
-        if (habits.isEmpty()) {
+        if (habits.isEmpty() && stepsState == null) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 Text(strings.homeEmptyTitle, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
             }
@@ -130,6 +135,18 @@ fun HomeScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                if (stepsState != null && stepsState!!.isFresh) {
+                    item(key = "wear_steps_card") {
+                        WearStepsCard(state = stepsState!!, strings = strings)
+                    }
+                }
+                if (habits.isEmpty()) {
+                    item(key = "empty_state") {
+                        Box(Modifier.fillMaxWidth().padding(top = 24.dp), contentAlignment = Alignment.Center) {
+                            Text(strings.homeEmptyTitle, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                        }
+                    }
+                }
                 items(habits, key = { it.habit.id }) { state ->
                     HabitCard(
                         state = state,
@@ -149,6 +166,33 @@ fun HomeScreen(
                         onDelete = { habitToDelete = state.habit }
                     )
                 }
+            }
+        }
+    }
+}
+
+/** Μικρή κάρτα στην κορυφή της Αρχικής με τα σημερινά βήματα, όπως τα έστειλε το ρολόι. */
+@Composable
+private fun WearStepsCard(state: com.ownhabs.app.wear.WearStepsState, strings: AppStrings) {
+    val minutesAgo = ((System.currentTimeMillis() - state.updatedAt) / 60000L).toInt()
+    val freshnessLabel = if (minutesAgo <= 1) strings.homeStepsUpdatedJustNow else strings.homeStepsUpdatedMinutesAgo(minutesAgo)
+
+    Card(shape = RoundedCornerShape(18.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier.size(44.dp).clip(CircleShape).background(Color(0xFF9ED037).copy(alpha = 0.2f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.DirectionsWalk, contentDescription = null, tint = Color(0xFF9ED037))
+            }
+            Spacer(Modifier.width(12.dp))
+            Column {
+                Text(strings.homeStepsCardTitle, style = MaterialTheme.typography.labelMedium)
+                Text(strings.homeStepsCount(state.steps), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(freshnessLabel, style = MaterialTheme.typography.labelSmall)
             }
         }
     }
